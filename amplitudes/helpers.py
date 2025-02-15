@@ -45,13 +45,18 @@ class massive:
 
 def abraket(a, b):
     '''angle braket of two spinors. 0-, 1-, or 2-dimensional output'''
-    braket = np.matmul(a.abra, b.aket)
+    braket = a.abra @ b.aket
     return braket
 
 def sbraket(a, b):
     '''square braket of two spinors. 0-, 1-, or 2-dimensional output'''
-    braket = np.matmul(a.sbra, b.sket)
+    braket = a.sbra @ b.sket
     return braket
+
+def ParkeTaylor(g1, g2, g3):
+    '''Parke-Taylor amplitude for (--+) helicity combination'''
+    amp = abraket(g1, g2)**3 / abraket(g2, g3) / abraket(g3, g1)
+    return amp
 
 def BCFW(i, j, hcase):
     shift = None
@@ -63,8 +68,21 @@ def onShell(shift, p):
     return hati, hatj
 
 def ggg(g1, g2, g3, hcase):
-    amp = None
-    return amp
+    '''from Campbell2023'''
+    match hcase:
+        case ['-', '-', '+']:
+            return ParkeTaylor(g1, g2, g3)
+        case ['+', '+', '-']:
+            return np.conjugate(ParkeTaylor(g1, g2, g3))
+        case ['-', '+', '-']:
+            return ParkeTaylor(g3, g1, g2)
+        case ['+', '-', '+']:
+            return np.conjugate(ParkeTaylor(g3, g1, g2))
+        case ['+', '-', '-']:
+            return ParkeTaylor(g2, g3, g1)
+        case ['-', '+', '+']:
+            return np.conjugate(ParkeTaylor(g2, g3, g1))
+    return 0
 
 def qqg(g1, q2, qbar3, hcase):
     amp = None
@@ -73,13 +91,15 @@ def qqg(g1, q2, qbar3, hcase):
 def ttg(t1, tbar2, g3, hcase, ref):
     match hcase:
         case ['+']:
-            amp = (ref.abra * t1.aket * t1.abra * g3.sket) / (mtop + abraket(ref, g3)) * abraket(t1, tbar2)
+            amp = (abraket(ref, t1) @ sbraket(t1, g3)) * sbraket(t1, tbar2) / (mtop * abraket(ref, g3))
+            return amp
         case ['-']:
-            amp = 1
-    return amp
+            amp = (abraket(g3, t1) @ sbraket(t1, ref)) * sbraket(t1, tbar2) / (mtop * abraket(g3, ref))
+            return amp
+    raise ValueError('missing gluon helicity')
 
 def tth(t1, tbar2, h3):
-    amp = None
+    amp = abraket(t1, tbar2) + sbraket(t1, tbar2)
     return amp
 
 def gggg(g1, g2, g3, g4, hcase):
