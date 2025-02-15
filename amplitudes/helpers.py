@@ -70,8 +70,12 @@ def qqg(g1, q2, qbar3, hcase):
     amp = None
     return amp
 
-def ttg(t1, tbar2, g3, hcase):
-    amp = None
+def ttg(t1, tbar2, g3, hcase, ref):
+    match hcase:
+        case ['+']:
+            amp = (ref.abra * t1.aket * t1.abra * g3.sket) / (mtop + abraket(ref, g3)) * abraket(t1, tbar2)
+        case ['-']:
+            amp = 1
     return amp
 
 def tth(t1, tbar2, h3):
@@ -87,6 +91,10 @@ def qqgg(g1, q2, qbar3, g4, hcase):
     return amp
 
 def ttgg(t1, tbar2, g3, g4, hcase):
+    amp = None
+    return amp
+
+def ttqq(t1, tbar2, q3, qbar4, hcase):
     amp = None
     return amp
 
