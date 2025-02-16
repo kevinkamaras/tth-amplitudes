@@ -53,42 +53,61 @@ def sbraket(a, b):
     braket = a.sbra @ b.sket
     return braket
 
-def ParkeTaylor(g1, g2, g3):
-    '''Parke-Taylor amplitude for (--+) helicity combination'''
-    amp = abraket(g1, g2)**3 / abraket(g2, g3) / abraket(g3, g1)
+def PT3(g1, g2, g3, invert=False):
+    '''Parke-Taylor amplitude for (--+) or (++-) helicity combinations'''
+    if invert:
+        amp = sbraket(g1, g2)**3 / sbraket(g2, g3) / sbraket(g3, g1)
+    else:
+        amp = abraket(g1, g2)**3 / abraket(g2, g3) / abraket(g3, g1)
     return amp
 
-def BCFW(i, j, hcase):
-    shift = None
-    return shift
+def PT4(g1, g2, g3, g4, negatives):
+    '''Parke-Taylor amplitude for (--++) helicity combination'''
+    gi, gj = list(negatives)
+    amp = abraket(gi, gj)**4 / abraket(g1, g2) / abraket(g2, g3) / abraket(g3, g4) / abraket(g4, g1)
+    return amp
 
-def onShell(shift, p):
-    hati = None
-    hatj = None
+def onShell(pi, pj, P, hcase):
+    match hcase[-2]:
+        case ['+']:
+            z = 0
+            hati = pi + z * pj
+            hatj = pj - z * pi
+        case ['+']:
+            z = 0
+            hati = pi - z * pj
+            hatj = pj + z * pi
     return hati, hatj
 
 def ggg(g1, g2, g3, hcase):
     '''from Campbell2023'''
+    g1 = massless(*g1)
+    g2 = massless(*g2)
+    g3 = massless(*g3)
     match hcase:
         case ['-', '-', '+']:
-            return ParkeTaylor(g1, g2, g3)
+            return PT3(g1, g2, g3)
         case ['+', '+', '-']:
-            return np.conjugate(ParkeTaylor(g1, g2, g3))
+            return PT3(g1, g2, g3, invert=True)
         case ['-', '+', '-']:
-            return ParkeTaylor(g3, g1, g2)
+            return PT3(g3, g1, g2)
         case ['+', '-', '+']:
-            return np.conjugate(ParkeTaylor(g3, g1, g2))
+            return PT3(g3, g1, g2, invert=True)
         case ['+', '-', '-']:
-            return ParkeTaylor(g2, g3, g1)
+            return PT3(g2, g3, g1)
         case ['-', '+', '+']:
-            return np.conjugate(ParkeTaylor(g2, g3, g1))
+            return PT3(g2, g3, g1, invert=True)
     return 0
 
 def qqg(g1, q2, qbar3, hcase):
-    amp = None
+    amp = ggg(g1, q2, qbar3, hcase)
     return amp
 
 def ttg(t1, tbar2, g3, hcase, ref):
+    t1 = massive(*t1)
+    tbar2 = massive(*tbar2)
+    g3 = massless(*g3)
+    ref = massless(*ref)
     match hcase:
         case ['+']:
             amp = (abraket(ref, t1) @ sbraket(t1, g3)) * sbraket(t1, tbar2) / (mtop * abraket(ref, g3))
@@ -99,25 +118,73 @@ def ttg(t1, tbar2, g3, hcase, ref):
     raise ValueError('missing gluon helicity')
 
 def tth(t1, tbar2, h3):
+    t1 = massive(t1)
+    tbar2 = massive(tbar2)
     amp = abraket(t1, tbar2) + sbraket(t1, tbar2)
     return amp
 
 def gggg(g1, g2, g3, g4, hcase):
-    amp = None
-    return amp
+    g1 = massless(*g1)
+    g2 = massless(*g2)
+    g3 = massless(*g3)
+    g4 = massless(*g4)
+    momenta = [g1, g2, g3, g4]
+    negatives = momenta[hcase == '-']
+    # if not MHV, amplitude is zero
+    if len(negatives) != 2:
+        return 0
+    else:
+        return PT4(g1, g2, g3, g4, negatives)
 
 def qqgg(g1, q2, qbar3, g4, hcase):
-    amp = None
+    amp = gggg(g1, q2, qbar3, g4, hcase)
     return amp
 
 def ttgg(t1, tbar2, g3, g4, hcase):
-    amp = None
-    return amp
+    p34 = g3 + g4
+    s34 = np.vdot(p34, p34)
+    t1 = massive(*t1)
+    tbar2 = massive(*tbar2)
+    g3 = massless(*g3)
+    g4 = massless(*g4)
+    match hcase:
+        case ['+', '+']:
+            amp = mtop * sbraket(g3, g4) * abraket(t1, tbar2) / abraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
+            return amp
+        case ['-', '-']:
+            amp = mtop * abraket(g3, g4) * sbraket(t1, tbar2) / sbraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
+            return amp
+        case ['+', '-']:
+            amp = - {(abraket(g4, t1) @ sbraket(t1, g3)) * (abraket(g4, tbar2) @ sbraket(tbar2, g3)) * abraket(t1, tbar2)
+                     / mtop * (abraket(g3, tbar2) @ sbraket(tbar2, g3)) * s34}
+            return amp
+        case ['-', '+']:
+            amp = - {(sbraket(g4, t1) @ abraket(t1, g3)) * (sbraket(g4, tbar2) @ abraket(tbar2, g3)) * sbraket(t1, tbar2)
+                     / mtop * (sbraket(g3, tbar2) @ abraket(tbar2, g3)) * s34}
+            return amp
+    raise ValueError('missing gluon helicities')
 
 def ttqq(t1, tbar2, q3, qbar4, hcase):
+    '''from Campbell2023'''
+    p34 = q3 + qbar4
+    s34 = np.vdot(p34, p34)
+    t1 = massive(*t1)
+    tbar2 = massive(*tbar2)
+    q3 = massless(*q3)
+    qbar4 = massless(*qbar4)
+    match hcase:
+        case ['+', '-']:
+            amp = (abraket(t1, q3) @ sbraket(qbar4, tbar2) + sbraket(t1, qbar4) @ abraket(q3, tbar2)) / s34
+            return amp
+        case ['-', '+']:
+            amp = (abraket(t1, qbar4) @ sbraket(q3, tbar2) + sbraket(t1, q3) @ abraket(qbar4, tbar2)) / s34
+            return amp
+    return 0
+
+def ttggg(t1, tbar2, g3, g4, g5, hcase):
     amp = None
     return amp
 
-def ttggg(t1, tbar2, g3, g4, g5, hcase):
+def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
     amp = None
     return amp
