@@ -1,47 +1,58 @@
 import numpy as np
 
 mtop = 1
-eps = np.array([[0, 1], [-1, 0]])
+epsLow  = np.array([[0, -1], [ 1, 0]])
+epsHigh = np.array([[0,  1], [-1, 0]])
+
+sig0 = np.array([[1,  0 ], [0 ,  1]])
+sig1 = np.array([[0,  1 ], [1 ,  0]])
+sig2 = np.array([[0, -1j], [1j,  0]])
+sig3 = np.array([[1,  0 ], [0 , -1]])
+pauli = [sig0, sig1, sig2, sig3]
 
 class massless:
     '''spinors for a given massless momentum'''
     def __init__(self, p0, p1, p2, p3):
-        m2 = abs(p0)**2 - abs(p1)**2 - abs(p2)**2 - abs(p3)**2
+        m2 = np.vdot(p0,p0) - np.vdot(p1,p1) - np.vdot(p2,p2) - np.vdot(p3,p3)
         if m2 >= 1e-10:
             raise ValueError('momentum is not massless')
         pp = p0 + p3
         pm = p0 - p3
         pt = p1 + 1j*p2
         pb = p1 - 1j*p2
-        theta = (1 + np.sign(-p0)) / 2
+        theta = np.heaviside(-p0, 0)
         if pp == 0:
             raise ValueError('pp = 0')
         else:
-            self.aket = ( 1j)**theta * np.array([[-pb / np.sqrt(pp), np.sqrt(pp)]]).T
+            self.aket = ( 1j)**theta * np.array([[-pb / np.sqrt(pp)], [np.sqrt(pp)]])
             self.sbra = (-1j)**theta * np.array([[-pt / np.sqrt(pp), np.sqrt(pp)]])
-            self.abra = np.matmul(eps, self.aket).T
-            self.sket = np.matmul(self.sbra, eps).T
+            self.abra = np.matmul(epsHigh, self.aket).T
+            self.sket = np.matmul(self.sbra, epsHigh.T).T
+            self.momentum = p0 * sig0 - p1 * sig1 - p2 * sig2 - p3 * sig3
 
 class massive:
     '''spinors for a given massive momentum'''
     def __init__(self, p0, p1, p2, p3):
         E = p0
-        P = np.sign(E) * np.sqrt(abs(p1)**2 + abs(p2)**2 + abs(p3)**2)
-        pp = p0 + p3
+        P = np.sign(E) * np.sqrt(np.vdot(p1,p1) + np.vdot(p2,p2) + np.vdot(p3,p3))
+        self.mass = np.sqrt(E**2 - P**2)
+        pp = P + p3
         pm = p0 - p3
         pt = p1 + 1j*p2
         pb = p1 - 1j*p2
+        theta = np.heaviside(-E, 0)
         if pp == 0:
             raise ValueError('pp = 0')
         else:
-            I1 = np.sqrt((E - P) / 2 / P) * np.array([[np.sqrt(pp),  pt / np.sqrt(pp)]]).T
-            I2 = np.sqrt((E + P) / 2 / P) * np.array([[-pb / np.sqrt(pp), np.sqrt(pp)]]).T
-            J1 = np.sqrt((E + P) / 2 / P) * np.array([[-pt / np.sqrt(pp), np.sqrt(pp)]])
-            J2 = np.sqrt((E - P) / 2 / P) * np.array([[np.sqrt(pp),  pb / np.sqrt(pp)]])
-            self.aket = np.hstack([I1, I2])
-            self.sbra = np.vstack([J1, J2])
-            self.abra = np.matmul(eps, self.aket).T  
-            self.sket = np.matmul(self.sbra, eps).T
+            I1 =  np.sqrt((E - P) / 2 / P) * np.array([[np.sqrt(pp)], [ pt / np.sqrt(pp)]])
+            I2 =  np.sqrt((E + P) / 2 / P) * np.array([[-pb / np.sqrt(pp)], [np.sqrt(pp)]])
+            J1 =  np.sqrt((E + P) / 2 / P) * np.array([[-pt / np.sqrt(pp), np.sqrt(pp)]])
+            J2 = -np.sqrt((E - P) / 2 / P) * np.array([[np.sqrt(pp),  pb / np.sqrt(pp)]])
+            self.aket = ( 1j)**theta * np.hstack([I1, I2])
+            self.sbra = (-1j)**theta * np.vstack([J1, J2])
+            self.abra = np.matmul(epsHigh, self.aket  ).T
+            self.sket = np.matmul(self.sbra, epsHigh.T).T
+            self.momentum = p0 * sig0 - p1 * sig1 - p2 * sig2 - p3 * sig3
 
 def abraket(a, b):
     '''angle braket of two spinors. 0-, 1-, or 2-dimensional output'''
