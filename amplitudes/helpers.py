@@ -29,6 +29,7 @@ class massless:
             self.abra = np.matmul(epsHigh, self.aket).T
             self.sket = np.matmul(self.sbra, epsHigh.T).T
             self.momentum = p0 * sig0 - p1 * sig1 - p2 * sig2 - p3 * sig3
+            self.vector = np.array([p0, p1, p2, p3])
 
 class massive:
     '''spinors for a given massive momentum'''
@@ -53,6 +54,7 @@ class massive:
             self.abra = np.matmul(epsHigh, self.aket  ).T
             self.sket = np.matmul(self.sbra, epsHigh.T).T
             self.momentum = p0 * sig0 - p1 * sig1 - p2 * sig2 - p3 * sig3
+            self.vector = np.array([p0, p1, p2, p3])
 
 def abraket(a, b):
     '''angle braket of two spinors. 0-, 1-, or 2-dimensional output'''
@@ -78,23 +80,29 @@ def PT4(g1, g2, g3, g4, negatives):
     amp = abraket(gi, gj)**4 / abraket(g1, g2) / abraket(g2, g3) / abraket(g3, g4) / abraket(g4, g1)
     return amp
 
-def onShell(pi, pj, P, hcase):
+def onShell(pi, pj, P, hcase, side):
+    spinors = []
     match hcase[-2]:
         case ['+']:
             z = 0
+            if side == 'left':
+                z = 0
+            else:
+                z = 0
             hati = pi + z * pj
             hatj = pj - z * pi
         case ['+']:
             z = 0
+            if side == 'left':
+                z = 0
+            else:
+                z = 0
             hati = pi - z * pj
             hatj = pj + z * pi
     return hati, hatj
 
 def ggg(g1, g2, g3, hcase):
     '''from Campbell2023'''
-    g1 = massless(*g1)
-    g2 = massless(*g2)
-    g3 = massless(*g3)
     match hcase:
         case ['-', '-', '+']:
             return PT3(g1, g2, g3)
@@ -115,10 +123,6 @@ def qqg(g1, q2, qbar3, hcase):
     return amp
 
 def ttg(t1, tbar2, g3, hcase, ref):
-    t1 = massive(*t1)
-    tbar2 = massive(*tbar2)
-    g3 = massless(*g3)
-    ref = massless(*ref)
     match hcase:
         case ['+']:
             amp = (abraket(ref, t1) @ sbraket(t1, g3)) * sbraket(t1, tbar2) / (mtop * abraket(ref, g3))
@@ -129,16 +133,10 @@ def ttg(t1, tbar2, g3, hcase, ref):
     raise ValueError('missing gluon helicity')
 
 def tth(t1, tbar2, h3):
-    t1 = massive(t1)
-    tbar2 = massive(tbar2)
     amp = abraket(t1, tbar2) + sbraket(t1, tbar2)
     return amp
 
 def gggg(g1, g2, g3, g4, hcase):
-    g1 = massless(*g1)
-    g2 = massless(*g2)
-    g3 = massless(*g3)
-    g4 = massless(*g4)
     momenta = [g1, g2, g3, g4]
     negatives = momenta[hcase == '-']
     # if not MHV, amplitude is zero
@@ -154,10 +152,6 @@ def qqgg(g1, q2, qbar3, g4, hcase):
 def ttgg(t1, tbar2, g3, g4, hcase):
     p34 = g3 + g4
     s34 = np.vdot(p34, p34)
-    t1 = massive(*t1)
-    tbar2 = massive(*tbar2)
-    g3 = massless(*g3)
-    g4 = massless(*g4)
     match hcase:
         case ['+', '+']:
             amp = mtop * sbraket(g3, g4) * abraket(t1, tbar2) / abraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
@@ -179,10 +173,6 @@ def ttqq(t1, tbar2, q3, qbar4, hcase):
     '''from Campbell2023'''
     p34 = q3 + qbar4
     s34 = np.vdot(p34, p34)
-    t1 = massive(*t1)
-    tbar2 = massive(*tbar2)
-    q3 = massless(*q3)
-    qbar4 = massless(*qbar4)
     match hcase:
         case ['+', '-']:
             amp = (abraket(t1, q3) @ sbraket(qbar4, tbar2) + sbraket(t1, qbar4) @ abraket(q3, tbar2)) / s34
