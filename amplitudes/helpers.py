@@ -8,7 +8,7 @@ sig0 = np.array([[1,  0 ], [0 ,  1]])
 sig1 = np.array([[0,  1 ], [1 ,  0]])
 sig2 = np.array([[0, -1j], [1j,  0]])
 sig3 = np.array([[1,  0 ], [0 , -1]])
-pauli = [sig0, sig1, sig2, sig3]
+pauli = [sig0, -sig1, -sig2, -sig3]
 
 class massless:
     '''spinors for a given massless momentum'''
@@ -81,24 +81,34 @@ def PT4(g1, g2, g3, g4, negatives):
     return amp
 
 def onShell(pi, pj, P, hcase, side):
-    spinors = []
+    z = 0
+    bispinori = np.empty((2,2))
+    bispinorj = np.empty((2,2))
     match hcase[-2]:
         case ['+']:
-            z = 0
             if side == 'left':
-                z = 0
+                z = (P[1].abra @ P[0].momentum @ P[1].sket) / (pj.abra @ P[0].momentum @ pi.sket)
+            elif len(P) == 2:
+                z = - (P[1].abra @ P[0].momentum @ P[1].sket) / (pj.abra @ P[0].momentum @ pi.sket)
             else:
-                z = 0
-            hati = pi + z * pj
-            hatj = pj - z * pi
-        case ['+']:
-            z = 0
+                z = - {(  P[-1].abra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
+                       + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket)
+                       / pj.sbra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket }
+            bispinori = (pi.aket + z * pj.aket) @ pi.sbra 
+            bispinorj = pj.aket @ (pj.sbra - z * pi.sbra)
+        case ['-']:
             if side == 'left':
-                z = 0
+                z = - (P[1].abra @ P[0].momentum @ P[1].sket) / (pi.abra @ P[0].momentum @ pj.sket)
+            elif len(P) == 2:
+                z = (P[1].abra @ P[0].momentum @ P[1].sket) / (pi.abra @ P[0].momentum @ pj.sket)
             else:
-                z = 0
-            hati = pi - z * pj
-            hatj = pj + z * pi
+                z = {(  P[-1].abra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
+                       + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket)
+                       / pi.sbra @ np.sum([p.momentum for p in P[:-1]]) @ pj.sket }
+            bispinori = pi.aket @ (pi.sbra - z * pj.sbra)
+            bispinorj = (pj.aket + z * pi.aket) @ pj.sbra 
+    hati = massless(np.array([np.trace(bispinori @ sigma) /2 for sigma in pauli]))
+    hatj = massless(np.array([np.trace(bispinorj @ sigma) /2 for sigma in pauli]))
     return hati, hatj
 
 def ggg(g1, g2, g3, hcase):
