@@ -20,40 +20,42 @@ class massless:
         pm = p0 - p3
         pt = p1 + 1j*p2
         pb = p1 - 1j*p2
-        theta = np.heaviside(-p0, 0)
+        theta = np.heaviside(-np.real(p0), 0)
         if pp == 0:
             raise ValueError('pp = 0')
         else:
-            self.aket = ( 1j)**theta * np.array([[-pb / np.sqrt(pp)], [np.sqrt(pp)]])
-            self.sbra = (-1j)**theta * np.array([[-pt / np.sqrt(pp), np.sqrt(pp)]])
+            self.aket = ( 1j)**theta * np.array([[-pb / np.emath.sqrt(pp)], [np.emath.sqrt(pp)]])
+            self.sbra = (-1j)**theta * np.array([[-pt / np.emath.sqrt(pp), np.emath.sqrt(pp)]])
             self.abra = np.matmul(epsHigh, self.aket).T
             self.sket = np.matmul(self.sbra, epsHigh.T).T
             self.momentum = p0 * sig0 - p1 * sig1 - p2 * sig2 - p3 * sig3
+            self.sketabra = p0 * sig0 + p1 * sig1 + p2 * sig2 + p3 * sig3
             self.vector = np.array([p0, p1, p2, p3])
 
 class massive:
     '''spinors for a given massive momentum'''
     def __init__(self, p0, p1, p2, p3):
         E = p0
-        P = np.sign(E) * np.sqrt(np.vdot(p1,p1) + np.vdot(p2,p2) + np.vdot(p3,p3))
-        self.mass = np.sqrt(E**2 - P**2)
+        P = np.sign(E) * np.emath.sqrt(np.vdot(p1,p1) + np.vdot(p2,p2) + np.vdot(p3,p3))
+        self.mass = np.emath.sqrt(E**2 - P**2)
         pp = P + p3
         pm = p0 - p3
         pt = p1 + 1j*p2
         pb = p1 - 1j*p2
-        theta = np.heaviside(-E, 0)
+        theta = np.heaviside(-np.real(E), 0)
         if pp == 0:
             raise ValueError('pp = 0')
         else:
-            I1 =  np.sqrt((E - P) / 2 / P) * np.array([[np.sqrt(pp)], [ pt / np.sqrt(pp)]])
-            I2 =  np.sqrt((E + P) / 2 / P) * np.array([[-pb / np.sqrt(pp)], [np.sqrt(pp)]])
-            J1 =  np.sqrt((E + P) / 2 / P) * np.array([[-pt / np.sqrt(pp), np.sqrt(pp)]])
-            J2 = -np.sqrt((E - P) / 2 / P) * np.array([[np.sqrt(pp),  pb / np.sqrt(pp)]])
+            I1 =  np.emath.sqrt((E - P) / 2 / P) * np.array([[np.emath.sqrt(pp)], [ pt / np.emath.sqrt(pp)]])
+            I2 =  np.emath.sqrt((E + P) / 2 / P) * np.array([[-pb / np.emath.sqrt(pp)], [np.emath.sqrt(pp)]])
+            J1 =  np.emath.sqrt((E + P) / 2 / P) * np.array([[-pt / np.emath.sqrt(pp), np.emath.sqrt(pp)]])
+            J2 = -np.emath.sqrt((E - P) / 2 / P) * np.array([[np.emath.sqrt(pp),  pb / np.emath.sqrt(pp)]])
             self.aket = ( 1j)**theta * np.hstack([I1, I2])
             self.sbra = (-1j)**theta * np.vstack([J1, J2])
             self.abra = np.matmul(epsHigh, self.aket  ).T
             self.sket = np.matmul(self.sbra, epsHigh.T).T
             self.momentum = p0 * sig0 - p1 * sig1 - p2 * sig2 - p3 * sig3
+            self.sketabra = p0 * sig0 + p1 * sig1 + p2 * sig2 + p3 * sig3
             self.vector = np.array([p0, p1, p2, p3])
 
 def abraket(a, b):
@@ -91,9 +93,8 @@ def onShell(pi, pj, P, hcase, side):
             elif len(P) == 2:
                 z = - (P[1].abra @ P[0].momentum @ P[1].sket) / (pj.abra @ P[0].momentum @ pi.sket)
             else:
-                z = - {(  P[-1].abra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
-                       + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket)
-                       / pj.sbra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket }
+                z = - (  P[-1].abra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
+                       + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket) / pj.sbra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
             bispinori = (pi.aket + z * pj.aket) @ pi.sbra 
             bispinorj = pj.aket @ (pj.sbra - z * pi.sbra)
         case ['-']:
@@ -102,13 +103,12 @@ def onShell(pi, pj, P, hcase, side):
             elif len(P) == 2:
                 z = (P[1].abra @ P[0].momentum @ P[1].sket) / (pi.abra @ P[0].momentum @ pj.sket)
             else:
-                z = {(  P[-1].abra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
-                       + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket)
-                       / pi.sbra @ np.sum([p.momentum for p in P[:-1]]) @ pj.sket }
+                z = (  P[-1].abra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
+                    + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket) / pi.sbra @ np.sum([p.momentum for p in P[:-1]]) @ pj.sket
             bispinori = pi.aket @ (pi.sbra - z * pj.sbra)
             bispinorj = (pj.aket + z * pi.aket) @ pj.sbra 
-    hati = massless(np.array([np.trace(bispinori @ sigma) /2 for sigma in pauli]))
-    hatj = massless(np.array([np.trace(bispinorj @ sigma) /2 for sigma in pauli]))
+    hati = massless(*np.array([np.trace(bispinori @ sigma) /2 for sigma in pauli]))
+    hatj = massless(*np.array([np.trace(bispinorj @ sigma) /2 for sigma in pauli]))
     return hati, hatj
 
 def ggg(g1, g2, g3, hcase):
@@ -170,12 +170,12 @@ def ttgg(t1, tbar2, g3, g4, hcase):
             amp = mtop * abraket(g3, g4) * sbraket(t1, tbar2) / sbraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
             return amp
         case ['+', '-']:
-            amp = - {(abraket(g4, t1) @ sbraket(t1, g3)) * (abraket(g4, tbar2) @ sbraket(tbar2, g3)) * abraket(t1, tbar2)
-                     / mtop * (abraket(g3, tbar2) @ sbraket(tbar2, g3)) * s34}
+            amp = - ((abraket(g4, t1) @ sbraket(t1, g3)) * (abraket(g4, tbar2) @ sbraket(tbar2, g3)) * abraket(t1, tbar2)
+                     / mtop * (abraket(g3, tbar2) @ sbraket(tbar2, g3)) * s34)
             return amp
         case ['-', '+']:
-            amp = - {(sbraket(g4, t1) @ abraket(t1, g3)) * (sbraket(g4, tbar2) @ abraket(tbar2, g3)) * sbraket(t1, tbar2)
-                     / mtop * (sbraket(g3, tbar2) @ abraket(tbar2, g3)) * s34}
+            amp = - ((sbraket(g4, t1) @ abraket(t1, g3)) * (sbraket(g4, tbar2) @ abraket(tbar2, g3)) * sbraket(t1, tbar2)
+                     / mtop * (sbraket(g3, tbar2) @ abraket(tbar2, g3)) * s34)
             return amp
     raise ValueError('missing gluon helicities')
 

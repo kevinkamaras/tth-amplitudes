@@ -1,15 +1,29 @@
-import helpers as hp
+import amplitudes.helpers as hp
 import numpy as np
 
 def tthg(t1, tbar2, h3, g4, hcase, ref):
-    d1 = {(  hp.abraket(t1, ref) @ (g4.sbra @ h3.momentum @ tbar2.aket)
-           + hp.sbraket(t1, g4) @ (ref.abra @ h3.momentum @ tbar2.sket))
-            / (g4.abra @ tbar2.momentum @ g4.sket)}
-    d2 = {(  (t1.abra @ h3.momentum @ g4.sket) @ hp.abraket(ref, tbar2)
-           + (t1.sbra @ h3.momentum @ ref.aket) @ hp.sbraket(g4, tbar2))
-            / (g4.abra @ t1.momentum @ g4.sket)}
-    amp = (np.sqrt(2) / hp.abraket(ref, g4)) * (d1 + d2)
-    return amp
+    match hcase:
+        case ['+']:
+            # d1 = (  hp.abraket(t1, ref) @ (g4.sbra @ h3.momentum @ tbar2.aket)
+            #     + hp.sbraket(t1, g4) @ (ref.abra @ h3.momentum @ tbar2.sket)) / (g4.abra @ t1.momentum @ g4.sket)
+            # d2 = (  (t1.abra @ h3.momentum @ g4.sket) @ hp.abraket(ref, tbar2)
+            #     + (t1.sbra @ h3.momentum @ ref.aket) @ hp.sbraket(g4, tbar2)) / (g4.abra @ tbar2.momentum @ g4.sket)
+            d1 = (  hp.abraket(t1, ref) @ (g4.sbra @ t1.sketabra @ tbar2.aket)
+                  - t1.mass * (hp.abraket(t1, ref) @ hp.sbraket(g4, tbar2))
+                  + hp.sbraket(t1, g4) @ (ref.abra @ (t1.momentum + g4.momentum) @ tbar2.sket)
+                  - t1.mass * (hp.sbraket(t1, g4) @ hp.abraket(ref, tbar2))) / (g4.abra @ t1.momentum @ g4.sket)
+            d2 = (  (t1.abra @ (t1.momentum + h3.momentum) @ g4.sket) @ hp.abraket(ref, tbar2)
+                  - t1.mass * (hp.abraket(t1, ref) @ hp.sbraket(g4, tbar2))
+                  + (t1.sbra @ (t1.sketabra + h3.sketabra) @ ref.aket) @ hp.sbraket(g4, tbar2)
+                  - t1.mass * (hp.sbraket(t1, g4) @ hp.abraket(ref, tbar2))) / (g4.abra @ tbar2.momentum @ g4.sket)
+            return (np.sqrt(2) / hp.abraket(ref, g4)) * (d1 + d2)
+        case ['-']:
+            d1 = (  hp.abraket(t1, ref) @ (g4.sbra @ h3.momentum @ tbar2.aket)
+                + hp.sbraket(t1, g4) @ (ref.abra @ h3.momentum @ tbar2.sket)) / (g4.abra @ t1.momentum @ g4.sket)
+            d2 = (  (t1.abra @ h3.momentum @ g4.sket) @ hp.abraket(ref, tbar2)
+                + (t1.sbra @ h3.momentum @ ref.aket) @ hp.sbraket(g4, tbar2)) / (g4.abra @ tbar2.momentum @ g4.sket)
+            return (np.sqrt(2) / hp.abraket(ref, g4)) * (d1 + d2)
+    raise ValueError('missing gluon helicity')
 
 def tthgg(t1, tbar2, h3, g4, g5, hcase):
     P = [t1, g5]
