@@ -39,7 +39,7 @@ class massive:
         P = np.sign(E) * np.emath.sqrt(np.vdot(p1,p1) + np.vdot(p2,p2) + np.vdot(p3,p3))
         self.mass = np.emath.sqrt(E**2 - P**2)
         pp = P + p3
-        pm = p0 - p3
+        pm = P - p3
         pt = p1 + 1j*p2
         pb = p1 - 1j*p2
         theta = np.heaviside(-np.real(E), 0)
@@ -58,6 +58,11 @@ class massive:
             self.sketabra = p0 * sig0 + p1 * sig1 + p2 * sig2 + p3 * sig3
             self.vector = np.array([p0, p1, p2, p3])
 
+def minkowski(p):
+    if len(p) != 4:
+        raise TypeError('p is not a four vector')
+    return p[0]**2 - p[1]**2 - p[2]**2 - p[3]**2
+
 def abraket(a, b):
     '''angle braket of two spinors. 0-, 1-, or 2-dimensional output'''
     braket = a.abra @ b.aket
@@ -68,13 +73,13 @@ def sbraket(a, b):
     braket = a.sbra @ b.sket
     return braket
 
-def PT3(g1, g2, g3, invert=False):
-    '''Parke-Taylor amplitude for (--+) or (++-) helicity combinations'''
-    if invert:
-        amp = sbraket(g1, g2)**3 / sbraket(g2, g3) / sbraket(g3, g1)
-    else:
-        amp = abraket(g1, g2)**3 / abraket(g2, g3) / abraket(g3, g1)
-    return amp
+# def PT3(g1, g2, g3, invert=False):
+#     '''Parke-Taylor amplitude for (--+) or (++-) helicity combinations'''
+#     if invert:
+#         amp = sbraket(g1, g2)**3 / sbraket(g2, g3) / sbraket(g3, g1)
+#     else:
+#         amp = abraket(g1, g2)**3 / abraket(g2, g3) / abraket(g3, g1)
+#     return amp
 
 def PT4(g1, g2, g3, g4, negatives):
     '''Parke-Taylor amplitude for (--++) helicity combination'''
@@ -82,11 +87,11 @@ def PT4(g1, g2, g3, g4, negatives):
     amp = abraket(gi, gj)**4 / abraket(g1, g2) / abraket(g2, g3) / abraket(g3, g4) / abraket(g4, g1)
     return amp
 
-def onShell(pi, pj, P, hcase, side):
+def onShell(pj, pi, P, hcase, side):
     z = 0
     bispinori = np.empty((2,2))
     bispinorj = np.empty((2,2))
-    match hcase[-2]:
+    match hcase[-1]:
         case '+':
             if side == 'left':
                 z = (P[1].abra @ P[0].momentum @ P[1].sket) / (pj.abra @ P[0].momentum @ pi.sket)
@@ -107,38 +112,65 @@ def onShell(pi, pj, P, hcase, side):
                     + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket) / pi.sbra @ np.sum([p.momentum for p in P[:-1]]) @ pj.sket
             bispinori = pi.aket @ (pi.sbra - z * pj.sbra)
             bispinorj = (pj.aket + z * pi.aket) @ pj.sbra 
-    hati = massless(*np.array([np.trace(bispinori @ sigma) /2 for sigma in pauli]))
-    hatj = massless(*np.array([np.trace(bispinorj @ sigma) /2 for sigma in pauli]))
+    hati = massless(*np.array([np.trace(bispinori @ sigma) / 2 for sigma in pauli]))
+    hatj = massless(*np.array([np.trace(bispinorj @ sigma) / 2 for sigma in pauli]))
     return hati, hatj
 
 def ggg(g1, g2, g3, hcase):
     '''from Campbell2023'''
     match hcase:
         case ['-', '-', '+']:
-            return PT3(g1, g2, g3)
+            return abraket(g1, g2)**3 / abraket(g2, g3) / abraket(g3, g1)
         case ['+', '+', '-']:
-            return PT3(g1, g2, g3, invert=True)
+            return sbraket(g1, g2)**3 / sbraket(g2, g3) / sbraket(g3, g1)
         case ['-', '+', '-']:
-            return PT3(g3, g1, g2)
+            return abraket(g3, g1)**3 / abraket(g1, g2) / abraket(g2, g3)
         case ['+', '-', '+']:
-            return PT3(g3, g1, g2, invert=True)
+            return sbraket(g3, g1)**3 / sbraket(g1, g2) / sbraket(g2, g3)
         case ['+', '-', '-']:
-            return PT3(g2, g3, g1)
+            return abraket(g2, g3)**3 / abraket(g1, g2) / abraket(g3, g1)
         case ['-', '+', '+']:
-            return PT3(g2, g3, g1, invert=True)
+            return sbraket(g2, g3)**3 / sbraket(g1, g2) / sbraket(g3, g1)
     return 0
 
+# def ggg(g1, g2, g3, hcase):
+#     '''from Campbell2023'''
+#     match hcase:
+#         case ['-', '-', '+']:
+#             return PT3(g1, g2, g3)
+#         case ['+', '+', '-']:
+#             return PT3(g1, g2, g3, invert=True)
+#         case ['-', '+', '-']:
+#             return PT3(g3, g1, g2)
+#         case ['+', '-', '+']:
+#             return PT3(g3, g1, g2, invert=True)
+#         case ['+', '-', '-']:
+#             return PT3(g2, g3, g1)
+#         case ['-', '+', '+']:
+#             return PT3(g2, g3, g1, invert=True)
+#     return 0
+
 def qqg(g1, q2, qbar3, hcase):
-    amp = None
-    return amp
+    '''from Arkani-Hamed2021'''
+    # print(abraket(q2, qbar3))
+    match hcase:
+        case ['-', '-', '+']:
+            return abraket(g1, q2)**2 / abraket(q2, qbar3)
+        case ['+', '+', '-']:
+            return sbraket(g1, q2)**2 / sbraket(q2, qbar3)
+        case ['-', '+', '-']:
+            return abraket(qbar3, g1)**2 / abraket(q2, qbar3)
+        case ['+', '-', '+']:
+            return sbraket(qbar3, g1)**2 / sbraket(q2, qbar3)
+    return 0
 
 def ttg(t1, tbar2, g3, hcase, ref):
     match hcase:
         case '+':
-            amp = (abraket(ref, t1) @ sbraket(t1, g3)) * sbraket(t1, tbar2) / (mtop * abraket(ref, g3))
+            amp = (abraket(ref, t1) @ sbraket(t1, g3)) * sbraket(t1, tbar2) / (t1.mass * abraket(ref, g3))
             return amp
         case '-':
-            amp = (abraket(g3, t1) @ sbraket(t1, ref)) * sbraket(t1, tbar2) / (mtop * abraket(g3, ref))
+            amp = (abraket(g3, t1) @ sbraket(t1, ref)) * sbraket(t1, tbar2) / (t1.mass * abraket(g3, ref))
             return amp
     raise ValueError('missing gluon helicity')
 
@@ -160,22 +192,22 @@ def qqgg(g1, q2, qbar3, g4, hcase):
     return amp
 
 def ttgg(t1, tbar2, g3, g4, hcase):
-    p34 = g3 + g4
-    s34 = np.vdot(p34, p34)
+    p34 = g3.vector + g4.vector
+    s34 = p34[0]**2 - p34[1]**2 - p34[2]**2 - p34[3]**2
     match hcase:
         case ['+', '+']:
-            amp = mtop * sbraket(g3, g4) * abraket(t1, tbar2) / abraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
+            amp = t1.mass * sbraket(g3, g4) * abraket(t1, tbar2) / abraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
             return amp
         case ['-', '-']:
-            amp = mtop * abraket(g3, g4) * sbraket(t1, tbar2) / sbraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
+            amp = t1.mass * abraket(g3, g4) * sbraket(t1, tbar2) / sbraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
             return amp
         case ['+', '-']:
             amp = - ((abraket(g4, t1) @ sbraket(t1, g3)) * (abraket(g4, tbar2) @ sbraket(tbar2, g3)) * abraket(t1, tbar2)
-                     / mtop * (abraket(g3, tbar2) @ sbraket(tbar2, g3)) * s34)
+                     / t1.mass * (abraket(g3, tbar2) @ sbraket(tbar2, g3)) * s34)
             return amp
         case ['-', '+']:
             amp = - ((sbraket(g4, t1) @ abraket(t1, g3)) * (sbraket(g4, tbar2) @ abraket(tbar2, g3)) * sbraket(t1, tbar2)
-                     / mtop * (sbraket(g3, tbar2) @ abraket(tbar2, g3)) * s34)
+                     / t1.mass * (sbraket(g3, tbar2) @ abraket(tbar2, g3)) * s34)
             return amp
     raise ValueError('missing gluon helicities')
 
@@ -191,11 +223,3 @@ def ttqq(t1, tbar2, q3, qbar4, hcase):
             amp = (abraket(t1, qbar4) @ sbraket(q3, tbar2) + sbraket(t1, q3) @ abraket(qbar4, tbar2)) / s34
             return amp
     return 0
-
-def ttggg(t1, tbar2, g3, g4, g5, hcase):
-    amp = None
-    return amp
-
-def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
-    amp = None
-    return amp
