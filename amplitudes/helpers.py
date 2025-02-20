@@ -15,7 +15,7 @@ class massless:
     def __init__(self, p0, p1, p2, p3):
         m2 = np.vdot(p0,p0) - np.vdot(p1,p1) - np.vdot(p2,p2) - np.vdot(p3,p3)
         if m2 >= 1e-10:
-            raise ValueError('momentum is not massless')
+            raise ValueError('momentum is not massless (m = '+str(np.sqrt(np.real(m2)))+')')
         pp = p0 + p3
         pm = p0 - p3
         pt = p1 + 1j*p2
@@ -87,7 +87,7 @@ def onShell(pi, pj, P, hcase, side):
     bispinori = np.empty((2,2))
     bispinorj = np.empty((2,2))
     match hcase[-2]:
-        case ['+']:
+        case '+':
             if side == 'left':
                 z = (P[1].abra @ P[0].momentum @ P[1].sket) / (pj.abra @ P[0].momentum @ pi.sket)
             elif len(P) == 2:
@@ -97,7 +97,7 @@ def onShell(pi, pj, P, hcase, side):
                        + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket) / pj.sbra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
             bispinori = (pi.aket + z * pj.aket) @ pi.sbra 
             bispinorj = pj.aket @ (pj.sbra - z * pi.sbra)
-        case ['-']:
+        case '-':
             if side == 'left':
                 z = - (P[1].abra @ P[0].momentum @ P[1].sket) / (pi.abra @ P[0].momentum @ pj.sket)
             elif len(P) == 2:
@@ -129,15 +129,15 @@ def ggg(g1, g2, g3, hcase):
     return 0
 
 def qqg(g1, q2, qbar3, hcase):
-    amp = ggg(g1, q2, qbar3, hcase)
+    amp = None
     return amp
 
 def ttg(t1, tbar2, g3, hcase, ref):
     match hcase:
-        case ['+']:
+        case '+':
             amp = (abraket(ref, t1) @ sbraket(t1, g3)) * sbraket(t1, tbar2) / (mtop * abraket(ref, g3))
             return amp
-        case ['-']:
+        case '-':
             amp = (abraket(g3, t1) @ sbraket(t1, ref)) * sbraket(t1, tbar2) / (mtop * abraket(g3, ref))
             return amp
     raise ValueError('missing gluon helicity')
@@ -156,7 +156,7 @@ def gggg(g1, g2, g3, g4, hcase):
         return PT4(g1, g2, g3, g4, negatives)
 
 def qqgg(g1, q2, qbar3, g4, hcase):
-    amp = gggg(g1, q2, qbar3, g4, hcase)
+    amp = None
     return amp
 
 def ttgg(t1, tbar2, g3, g4, hcase):

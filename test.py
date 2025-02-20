@@ -28,10 +28,9 @@ ggg2 = hp.ggg(g3, g1, g2, hcase2)
 t1 = hp.massive(*[5, 1, 1, 1])
 tbar2 = hp.massive(*[5, 1, -1, -1])
 g4 = hp.massless(*[5, 4, 0, 3])
-h3 = hp.massive(*(-t1.vector - tbar2.vector - g4.vector))
-hcase = ['+']
+g5 = hp.massless(*[5, -3, 4, 0])
+h3 = hp.massive(*(-t1.vector - tbar2.vector - g4.vector - g5.vector))
+hcase = ['-', '+']
 
-tthg1 = core.tthg(t1, tbar2, h3, g4, hcase, ref1)
-tthg2 = core.tthg(t1, tbar2, h3, g4, hcase, ref2)
-print(tthg1)
-print(tthg2)
+tthgg = core.tthgg(t1, tbar2, h3, g4, g5, hcase)
+print(tthgg)
