@@ -46,6 +46,7 @@ def ttggg(t1, tbar2, g3, g4, g5, hcase):
     return amp
 
 def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
+    print(f'hcase = {hcase}')
     P = [t1, g5]
     p15 = t1.vector + g5.vector
     s15 = hp.minkowski(p15)
@@ -53,7 +54,8 @@ def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
     hatp15 = hp.massive(*(t1.vector + hat5.vector))
     negp15 = hp.massive(*(-t1.vector - hat5.vector))
     d1 = (hp.ttg(t1, hatp15, hat5, hcase[-1], ref=qbar4)
-          @ hp.ttgg(negp15, tbar2, q3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
+          @ hp.ttqq(negp15, tbar2, q3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
+    print(f'd1 =\n{d1}')
 
     P = [q3, qbar4]
     p34 = q3.vector + qbar4.vector
@@ -62,10 +64,12 @@ def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
     hatp34 = hp.massless(*(q3.vector + hat4.vector))
     negp34 = hp.massless(*(-q3.vector - hat4.vector))
     d2a = (hp.ttgg(t1, tbar2, hatp34, hat5, ['+'] + list(hcase[-1]))
-           * hp.qqg(negp34, q3, hat4, ['-']+ list(hcase[:-1]))) / s34
+           * hp.gqq(negp34, q3, hat4, ['-']+ list(hcase[:-1]))) / s34
+    print(f'd2a =\n{d2a}')
     d2b = (hp.ttgg(t1, tbar2, hatp34, hat5, ['-'] + list(hcase[-1]))
-           * hp.qqg(negp34, q3, hat4, ['+']+ list(hcase[:-1]))) / s34
-
+           * hp.gqq(negp34, q3, hat4, ['+']+ list(hcase[:-1]))) / s34
+    print(f'd2b =\n{d2b}\n')
+    
     amp = d1 + d2a + d2b
     return amp
 
@@ -92,8 +96,19 @@ def tthgg(t1, tbar2, h3, g4, g5, hcase):
     return amp
 
 def tthqq(t1, tbar2, h3, q4, qbar5, hcase):
-    amp = None
-    return amp
+    match hcase:
+        case ['+', '-']:
+            d1 = 2 * (2 * t1.mass * hp.sbraket(t1, qbar5) @ hp.abraket(q4, tbar2)
+                      - (t1.abra @ h3.momentum @ qbar5.sket) @ hp.abraket(q4, tbar2)
+                      + 2 * t1.mass * hp.abraket(t1, q4) @ hp.sbraket(qbar5, tbar2)
+                      - (t1.sbra @ h3.sketabra @ q4.aket) @ hp.sbraket(qbar5, tbar2))
+            d2 = 0
+            return d1 + d2
+        case ['-', '+']:
+            d1 = 0
+            d2 = 0
+            return d1 + d2
+    return 0
 
 def tthggg(t1, tbar2, h3, g4, g5, g6, hcase):
     P = [t1, g6]
@@ -154,9 +169,9 @@ def tthqqg(t1, tbar2, h3, q4, qbar5, g6, hcase):
     hatp45 = hp.massless(*(q4.vector + hat5.vector))
     negp45 = hp.massless(*(-q4.vector - hat5.vector))
     d3a = (tthgg(t1, tbar2, h3, negp45, hat6, ['+'] + list(hcase[2]))
-           @ hp.qqg(hatp45, q4, hat5, ['-'] + list(hcase[:2]))) / s45
+           @ hp.gqq(hatp45, q4, hat5, ['-'] + list(hcase[:2]))) / s45
     d3b = (tthgg(t1, tbar2, h3, negp45, hat6, ['-'] + list(hcase[2]))
-           @ hp.qqg(hatp45, q4, hat5, ['+'] + list(hcase[:2]))) / s45
+           @ hp.gqq(hatp45, q4, hat5, ['+'] + list(hcase[:2]))) / s45
 
     amp = d1 + d2 + d3a + d3b
     return amp
@@ -233,9 +248,9 @@ def tthqqgg(t1, tbar2, h3, q4, qbar5, g6, g7, hcase):
     hatp456 = hp.massless(*(q4.vector + qbar5.vector + hat6.vector))
     negp456 = hp.massless(*(-q4.vector - qbar5.vector - hat6.vector))
     d3a = (tthgg(t1, tbar2, h3, negp456, hat7, ['+'] + list(hcase[3]))
-           @ hp.qqgg(hatp456, q4, qbar5, hat6, ['-'] + list(hcase[:3]))) / s456
+           @ hp.gqqg(hatp456, q4, qbar5, hat6, ['-'] + list(hcase[:3]))) / s456
     d3b = (tthgg(t1, tbar2, h3, negp456, hat7, ['-'] + list(hcase[3]))
-           @ hp.qqgg(hatp456, q4, qbar5, hat6, ['+'] + list(hcase[:3]))) / s456
+           @ hp.gqqg(hatp456, q4, qbar5, hat6, ['+'] + list(hcase[:3]))) / s456
 
     P = [qbar5, g6]
     p56 = qbar5.vector + g6.vector

@@ -8,14 +8,14 @@ sig0 = np.array([[1,  0 ], [0 ,  1]])
 sig1 = np.array([[0,  1 ], [1 ,  0]])
 sig2 = np.array([[0, -1j], [1j,  0]])
 sig3 = np.array([[1,  0 ], [0 , -1]])
-pauli = [sig0, -sig1, -sig2, -sig3]
+pauli = [sig0, sig1, sig2, sig3]
 
 class massless:
     '''spinors for a given massless momentum'''
     def __init__(self, p0, p1, p2, p3):
-        m2 = np.vdot(p0,p0) - np.vdot(p1,p1) - np.vdot(p2,p2) - np.vdot(p3,p3)
-        if m2 >= 1e-10:
-            raise ValueError('momentum is not massless (m = '+str(np.sqrt(np.real(m2)))+')')
+        m = np.emath.sqrt(np.vdot(p0,p0) - np.vdot(p1,p1) - np.vdot(p2,p2) - np.vdot(p3,p3))
+        if m >= 1e-5:
+            raise ValueError(f'momentum is not massless (m = {m})')
         pp = p0 + p3
         pm = p0 - p3
         pt = p1 + 1j*p2
@@ -36,7 +36,7 @@ class massive:
     '''spinors for a given massive momentum'''
     def __init__(self, p0, p1, p2, p3):
         E = p0
-        P = np.sign(E) * np.emath.sqrt(np.vdot(p1,p1) + np.vdot(p2,p2) + np.vdot(p3,p3))
+        P = np.sign(E) * np.emath.sqrt(p1**2 + p2**2 + p3**2)
         self.mass = np.emath.sqrt(E**2 - P**2)
         pp = P + p3
         pm = P - p3
@@ -87,33 +87,35 @@ def PT4(g1, g2, g3, g4, negatives):
     amp = abraket(gi, gj)**4 / abraket(g1, g2) / abraket(g2, g3) / abraket(g3, g4) / abraket(g4, g1)
     return amp
 
-def onShell(pj, pi, P, hcase, side):
+def onShell(pi, pj, P, hcase, side):
     z = 0
-    bispinori = np.empty((2,2))
-    bispinorj = np.empty((2,2))
-    match hcase[-1]:
-        case '+':
-            if side == 'left':
-                z = (P[1].abra @ P[0].momentum @ P[1].sket) / (pj.abra @ P[0].momentum @ pi.sket)
-            elif len(P) == 2:
-                z = - (P[1].abra @ P[0].momentum @ P[1].sket) / (pj.abra @ P[0].momentum @ pi.sket)
-            else:
-                z = - (  P[-1].abra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
-                       + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket) / pj.sbra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
-            bispinori = (pi.aket + z * pj.aket) @ pi.sbra 
-            bispinorj = pj.aket @ (pj.sbra - z * pi.sbra)
+    match hcase[-2]:
         case '-':
             if side == 'left':
-                z = - (P[1].abra @ P[0].momentum @ P[1].sket) / (pi.abra @ P[0].momentum @ pj.sket)
+                z = (pj.abra @ P[0].momentum @ pj.sket) / (pj.abra @ P[0].momentum @ pi.sket)
             elif len(P) == 2:
-                z = (P[1].abra @ P[0].momentum @ P[1].sket) / (pi.abra @ P[0].momentum @ pj.sket)
+                z = - (pi.abra @ P[0].momentum @ pi.sket) / (pj.abra @ P[0].momentum @ pi.sket)
             else:
-                z = (  P[-1].abra @ np.sum([p.momentum for p in P[:-1]]) @ P[-1].sket
-                    + P[-2].abra @ np.sum([p.momentum for p in P[:-2]]) @ P[-2].sket) / pi.sbra @ np.sum([p.momentum for p in P[:-1]]) @ pj.sket
-            bispinori = pi.aket @ (pi.sbra - z * pj.sbra)
-            bispinorj = (pj.aket + z * pi.aket) @ pj.sbra 
-    hati = massless(*np.array([np.trace(bispinori @ sigma) / 2 for sigma in pauli]))
-    hatj = massless(*np.array([np.trace(bispinorj @ sigma) / 2 for sigma in pauli]))
+                z = - ((  pi.abra @ np.sum([p.momentum for p in P[:-1]], axis=0) @ pi.sket
+                       + P[-2].abra @ np.sum([p.momentum for p in P[:-2]], axis=0) @ P[-2].sket)
+                       / pj.abra @ np.sum([p.momentum for p in P[:-1]], axis=0) @ pi.sket)
+            z = z[0, 0]
+            ivector = np.array([((pi.abra + z * pj.abra) @ sigma @ pj.sket)[0, 0] / 2 for sigma in pauli])
+            jvector = np.array([(pi.abra @ sigma @ (pj.sket - z * pi.sket))[0, 0] / 2 for sigma in pauli])
+        case '+':
+            if side == 'left':
+                z = - (pj.abra @ P[0].momentum @ pj.sket) / (pi.abra @ P[0].momentum @ pj.sket)
+            elif len(P) == 2:
+                z = (pi.abra @ P[0].momentum @ pi.sket) / (pi.abra @ P[0].momentum @ pj.sket)
+            else:
+                z = ((  pi.abra @ np.sum([p.momentum for p in P[:-1]], axis=0) @ pi.sket
+                    + P[-2].abra @ np.sum([p.momentum for p in P[:-2]], axis=0) @ P[-2].sket)
+                    / pi.abra @ np.sum([p.momentum for p in P[:-1]], axis=0) @ pj.sket)
+            z = z[0, 0]
+            ivector = np.array([(pi.abra @ sigma @ (pi.sket - z * pj.sket))[0, 0] / 2 for sigma in pauli])
+            jvector = np.array([((pj.abra + z * pi.abra) @ sigma @ pj.sket)[0, 0] / 2 for sigma in pauli])
+    hati = massless(*ivector)
+    hatj = massless(*jvector)
     return hati, hatj
 
 def ggg(g1, g2, g3, hcase):
@@ -150,27 +152,34 @@ def ggg(g1, g2, g3, hcase):
 #             return PT3(g2, g3, g1, invert=True)
 #     return 0
 
-def qqg(g1, q2, qbar3, hcase):
+def gqq(g1, q2, qbar3, hcase):
     '''from Arkani-Hamed2021'''
-    # print(abraket(q2, qbar3))
     match hcase:
         case ['-', '-', '+']:
+            if abs(abraket(g1, q2)) <= 1e-6:
+                return 0
             return abraket(g1, q2)**2 / abraket(q2, qbar3)
         case ['+', '+', '-']:
+            if abs(sbraket(g1, q2)) <= 1e-6:
+                return 0
             return sbraket(g1, q2)**2 / sbraket(q2, qbar3)
         case ['-', '+', '-']:
+            if abs(abraket(qbar3, g1)) <= 1e-6:
+                return 0
             return abraket(qbar3, g1)**2 / abraket(q2, qbar3)
         case ['+', '-', '+']:
+            if abs(sbraket(qbar3, g1)) <= 1e-6:
+                return 0
             return sbraket(qbar3, g1)**2 / sbraket(q2, qbar3)
     return 0
 
 def ttg(t1, tbar2, g3, hcase, ref):
     match hcase:
         case '+':
-            amp = (abraket(ref, t1) @ sbraket(t1, g3)) * sbraket(t1, tbar2) / (t1.mass * abraket(ref, g3))
+            amp = (ref.abra @ t1.momentum @ g3.sket) * sbraket(t1, tbar2) / (t1.mass * abraket(ref, g3))
             return amp
         case '-':
-            amp = (abraket(g3, t1) @ sbraket(t1, ref)) * sbraket(t1, tbar2) / (t1.mass * abraket(g3, ref))
+            amp = (g3.abra @ t1.momentum @ ref.sket) * sbraket(t1, tbar2) / (t1.mass * sbraket(g3, ref))
             return amp
     raise ValueError('missing gluon helicity')
 
@@ -192,28 +201,31 @@ def qqgg(g1, q2, qbar3, g4, hcase):
     return amp
 
 def ttgg(t1, tbar2, g3, g4, hcase):
+    '''from Campbell2023'''
     p34 = g3.vector + g4.vector
-    s34 = p34[0]**2 - p34[1]**2 - p34[2]**2 - p34[3]**2
+    s34 = minkowski(p34)
     match hcase:
         case ['+', '+']:
-            amp = t1.mass * sbraket(g3, g4) * abraket(t1, tbar2) / abraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
+            amp = t1.mass * sbraket(g3, g4) * abraket(t1, tbar2) / abraket(g3, g4) / (g3.abra @ t1.momentum @ g3.sket)
             return amp
         case ['-', '-']:
-            amp = t1.mass * abraket(g3, g4) * sbraket(t1, tbar2) / sbraket(g3, g4) / (abraket(g3, tbar2) @ sbraket(tbar2, g3))
+            amp = t1.mass * abraket(g3, g4) * sbraket(t1, tbar2) / sbraket(g3, g4) / (g3.abra @ t1.momentum @ g3.sket)
             return amp
         case ['+', '-']:
-            amp = - ((abraket(g4, t1) @ sbraket(t1, g3)) * (abraket(g4, tbar2) @ sbraket(tbar2, g3)) * abraket(t1, tbar2)
-                     / t1.mass * (abraket(g3, tbar2) @ sbraket(tbar2, g3)) * s34)
+            amp = ((g4.abra @ t1.momentum @ g3.sket)
+                   * (sbraket(t1, g3) @ abraket(g4, tbar2) + abraket(t1, g4) @ sbraket(g3, tbar2))
+                   / (t1.mass * (g3.abra @ t1.momentum @ g3.sket) * s34))
             return amp
         case ['-', '+']:
-            amp = - ((sbraket(g4, t1) @ abraket(t1, g3)) * (sbraket(g4, tbar2) @ abraket(tbar2, g3)) * sbraket(t1, tbar2)
-                     / t1.mass * (sbraket(g3, tbar2) @ abraket(tbar2, g3)) * s34)
+            amp = ((g3.abra @ t1.momentum @ g4.sket)
+                   * (abraket(t1, g3) @ sbraket(g4, tbar2) + sbraket(t1, g4) @ abraket(g3, tbar2))
+                   / (t1.mass * (g3.abra @ t1.momentum @ g3.sket) * s34))
             return amp
     raise ValueError('missing gluon helicities')
 
 def ttqq(t1, tbar2, q3, qbar4, hcase):
     '''from Campbell2023'''
-    p34 = q3 + qbar4
+    p34 = q3.vector + qbar4.vector
     s34 = np.vdot(p34, p34)
     match hcase:
         case ['+', '-']:
@@ -222,4 +234,4 @@ def ttqq(t1, tbar2, q3, qbar4, hcase):
         case ['-', '+']:
             amp = (abraket(t1, qbar4) @ sbraket(q3, tbar2) + sbraket(t1, q3) @ abraket(qbar4, tbar2)) / s34
             return amp
-    return 0
+    return [[0, 0], [0, 0]]
