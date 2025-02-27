@@ -96,13 +96,19 @@ def tthgg(t1, tbar2, h3, g4, g5, hcase):
     return amp
 
 def tthqq(t1, tbar2, h3, q4, qbar5, hcase):
+    m = t1.mass
+    p45 = q4.vector + qbar5.vector
+    s45 = hp.minkowski(p45)
     match hcase:
         case ['+', '-']:
-            d1 = 2 * (2 * t1.mass * hp.sbraket(t1, qbar5) @ hp.abraket(q4, tbar2)
+            d1 = 2 * ((2 * m * hp.sbraket(t1, qbar5) @ hp.abraket(q4, tbar2)
                       - (t1.abra @ h3.momentum @ qbar5.sket) @ hp.abraket(q4, tbar2)
-                      + 2 * t1.mass * hp.abraket(t1, q4) @ hp.sbraket(qbar5, tbar2)
+                      + 2 * m * hp.abraket(t1, q4) @ hp.sbraket(qbar5, tbar2)
                       - (t1.sbra @ h3.sketabra @ q4.aket) @ hp.sbraket(qbar5, tbar2))
-            d2 = 0
+                      / ((q4.abra @ tbar2.momentum @ q4.sket + qbar5.abra @ tbar2.momentum @ qbar5.sket + s45) * s45))
+            d2 = 2 * ((hp.abraket(t1, qbar5) @ (2 * m * hp.sbraket(q4, tbar2) + q4.sbra @ h3.sketabra @ tbar2.aket)
+                       + hp.sbraket(t1, q4) @ (2 * m * hp.abraket(qbar5, tbar2) + qbar5.abra @ h3.momentum @ tbar2.sket))
+                      / ((q4.abra @ t1.momentum @ q4.sket + qbar5.abra @ t1.momentum @ qbar5.sket + s45) * s45))
             return d1 + d2
         case ['-', '+']:
             d1 = 0

@@ -204,23 +204,26 @@ def ttgg(t1, tbar2, g3, g4, hcase):
     '''from Campbell2023'''
     p34 = g3.vector + g4.vector
     s34 = minkowski(p34)
+    m = t1.mass
     match hcase:
         case ['+', '+']:
-            amp = t1.mass * sbraket(g3, g4) * abraket(t1, tbar2) / abraket(g3, g4) / (g3.abra @ t1.momentum @ g3.sket)
-            return amp
+            amp = (m * sbraket(g3, g4) * abraket(t1, tbar2)
+                   / (abraket(g3, g4) * (g3.abra @ t1.momentum @ g3.sket)))
+            return amp / (-1j)
         case ['-', '-']:
-            amp = t1.mass * abraket(g3, g4) * sbraket(t1, tbar2) / sbraket(g3, g4) / (g3.abra @ t1.momentum @ g3.sket)
-            return amp
+            amp = (m * abraket(g3, g4) * sbraket(t1, tbar2)
+                   / (sbraket(g3, g4) * (g3.abra @ t1.momentum @ g3.sket)))
+            return amp / (-1j)
         case ['+', '-']:
             amp = ((g4.abra @ t1.momentum @ g3.sket)
                    * (sbraket(t1, g3) @ abraket(g4, tbar2) + abraket(t1, g4) @ sbraket(g3, tbar2))
-                   / (t1.mass * (g3.abra @ t1.momentum @ g3.sket) * s34))
-            return amp
+                   / ((g3.abra @ t1.momentum @ g3.sket) * s34))
+            return amp / (-1j)
         case ['-', '+']:
             amp = ((g3.abra @ t1.momentum @ g4.sket)
                    * (abraket(t1, g3) @ sbraket(g4, tbar2) + sbraket(t1, g4) @ abraket(g3, tbar2))
-                   / (t1.mass * (g3.abra @ t1.momentum @ g3.sket) * s34))
-            return amp
+                   / ((g3.abra @ t1.momentum @ g3.sket) * s34))
+            return amp / (-1j)
     raise ValueError('missing gluon helicities')
 
 def ttqq(t1, tbar2, q3, qbar4, hcase):

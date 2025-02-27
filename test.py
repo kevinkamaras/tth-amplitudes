@@ -2,48 +2,6 @@ import numpy as np
 import amplitudes.helpers as hp
 import amplitudes.core as core
 
-# g1 = hp.massless(*np.array([np.sqrt(2), 1, 0, 1]))
-# bispinor = g1.aket @ (g1.sbra - 1j * g1.sbra)
-# g2 = hp.massless(*np.array([np.trace(bispinor @ sigma) /2 for sigma in hp.pauli]))
-# g3 = hp.massless(*(-g1.vector - g2.vector))
-
-# t1    = hp.massive(*np.array([np.sqrt(2)+5j, 1-1j, 0, 1-1j]))
-# tbar2 = hp.massive(*np.array([-2*np.sqrt(2)-5j, -2+1j, 0, -2+1j]))
-
-# hcase = ['+']
-# ref   = hp.massless(*np.array([np.sqrt(2), 1, -1, 0]))
-ref1 = hp.massless(*[np.sqrt(5), 2, 1, 0])
-ref2 = hp.massless(*[np.sqrt(14), 3, -1, 2])
-
-# ttg1 = hp.ttg(t1, tbar2, g1, hcase, ref1)
-# ttg2 = hp.ttg(t1, tbar2, g1, hcase, ref2)
-# # print(ttg1)
-# print(ttg2)
-
-hcase1 = ['-', '-', '+']
-hcase2 = ['+', '-', '-']
-# ggg1 = hp.ggg(g1, g2, g3, hcase1)
-# ggg2 = hp.ggg(g3, g1, g2, hcase2)
-
-t1 = hp.massive(*[5, 1, 1, 1])
-tbar2 = hp.massive(*[5, 1, -1, -1])
-g4 = hp.massless(*[5, 4, 0, 3])
-g5 = hp.massless(*[5, -3, 4, 0])
-h3 = hp.massive(*(-t1.vector - tbar2.vector - g4.vector - g5.vector))
-hcase1 = ['+', '+']
-hcase2 = ['-', '+']
-hcase3 = ['+', '-']
-hcase4 = ['-', '-']
-
-# tthgg1 = core.tthgg(t1, tbar2, h3, g4, g5, hcase1)
-# tthgg2 = core.tthgg(t1, tbar2, h3, g4, g5, hcase2)
-# tthgg3 = core.tthgg(t1, tbar2, h3, g4, g5, hcase3)
-# tthgg4 = core.tthgg(t1, tbar2, h3, g4, g5, hcase4)
-# print(tthgg1)
-# print(tthgg2)
-# print(tthgg3)
-# print(tthgg4)
-
 t1    = hp.massive(*[5, -3, -1, 0])
 tbar2 = hp.massive(*[5, 0, 1, -4])
 q3    = hp.massless(*[5, 3, 0, 4])
@@ -78,7 +36,7 @@ m = 171
 
 phitop = 1.27
 thetatop = 0.78
-ptop = 50
+ptop = 500
 phiglu = 0.97
 thetaglu = 2.5
 
@@ -101,6 +59,39 @@ hcases = [['+', '+'],
           ['+', '-'],
           ['-', '+']]
 
-ttggs = [hp.ttgg(t1, tbar2, g3, g4, hcase) for hcase in hcases]
-for ttgg in ttggs:
-    print(ttgg)
+hcases2 = [[hcase[1], hcase[0]] for hcase in hcases]
+
+amps1234 = [hp.ttgg(t1, tbar2, g3, g4, hcase) for hcase in hcases]
+amps1243 = [hp.ttgg(t1, tbar2, g4, g3, hcase) for hcase in hcases2]
+subleadings = [amp1234 + amp1243 for amp1234, amp1243 in zip(amps1234, amps1243)]
+
+N = 3
+V = N**2 - 1
+colorSum = []
+for A1, A2, A3 in zip(amps1234, amps1243, subleadings):
+     colorSum += [V * (N * (abs(A1**2) + abs(A2**2)) - (1 / N) * abs(A3**2))]
+
+spinSum = sum([np.sum(i) for i in colorSum])
+print(f'<|M|^2> = {spinSum}')
+
+#from Gluck1978
+p12 = -t1.vector - tbar2.vector
+p13 = -t1.vector - g3.vector
+p14 = -t1.vector - g4.vector
+
+s = hp.minkowski(p12)
+t = hp.minkowski(p13)
+u = hp.minkowski(p14)
+
+Mss = (4 / s**2) * (t - m**2) * (u - m**2)
+Mtt = (-2 / (t - m**2)**2) * (4 * m**4 - (t - m**2) * (u - m**2) + 2 * m**2 * (t - m**2))
+Muu = (-2 / (u - m**2)**2) * (4 * m**4 - (u - m**2) * (t - m**2) + 2 * m**2 * (u - m**2))
+Mst = (4 / (s * (t - m**2))) * (m**4 - t * (s + t))
+Msu = (4 / (s * (u - m**2))) * (m**4 - u * (s + u))
+Mtu = ((-4 * m**2) / ((t - m**2) * (u - m**2))) * (4 * m**2 + (t - m**2) + (u - m**2))
+
+result = (12 * Mss + (16 / 3) * Mtt + (16 / 3) * Muu + 6 * Mst + 6 * Msu - (2 / 3) * Mtu) * 4
+print(f'<|M|^2> = {result}')
+
+ratio = spinSum / result
+print(f'ratio = {ratio}')
