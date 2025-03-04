@@ -29,7 +29,7 @@ def ttggg(t1, tbar2, g3, g4, g5, hcase):
     hatp15 = hp.massive(*(t1.vector + hat5.vector))
     negp15 = hp.massive(*(-t1.vector - hat5.vector))
     d1 = (hp.ttg(t1, hatp15, hat5, hcase[-1], ref=g4)
-          @ hp.ttgg(negp15, tbar2, g3, hat4, hcase[:0])) / (s15 - t1.mass**2)
+          @ hp.ttgg(negp15, tbar2, g3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
 
     P = [g3, g4]
     p34 = g3.vector + g4.vector
@@ -46,29 +46,25 @@ def ttggg(t1, tbar2, g3, g4, g5, hcase):
     return amp
 
 def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
-    print(f'hcase = {hcase}')
     P = [t1, g5]
     p15 = t1.vector + g5.vector
     s15 = hp.minkowski(p15)
-    hat4, hat5 = hp.onShell(qbar4, g5, P, hcase, side='left')
+    hat4, hat5, z = hp.onShell(qbar4, g5, P, hcase, side='left')
     hatp15 = hp.massive(*(t1.vector + hat5.vector))
     negp15 = hp.massive(*(-t1.vector - hat5.vector))
-    d1 = (hp.ttg(t1, hatp15, hat5, hcase[-1], ref=qbar4)
-          @ hp.ttqq(negp15, tbar2, q3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
-    print(f'd1 =\n{d1}')
+    d1 = -1j * (hp.ttg(t1, negp15, hat5, hcase[-1], ref=qbar4)
+          @ hp.ttqq(hatp15, tbar2, q3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
 
     P = [q3, qbar4]
     p34 = q3.vector + qbar4.vector
     s34 = hp.minkowski(p34)
-    hat4, hat5 = hp.onShell(qbar4, g5, P, hcase, side='right')
+    hat4, hat5, z = hp.onShell(qbar4, g5, P, hcase, side='right')
     hatp34 = hp.massless(*(q3.vector + hat4.vector))
     negp34 = hp.massless(*(-q3.vector - hat4.vector))
     d2a = (hp.ttgg(t1, tbar2, hatp34, hat5, ['+'] + list(hcase[-1]))
            * hp.gqq(negp34, q3, hat4, ['-']+ list(hcase[:-1]))) / s34
-    print(f'd2a =\n{d2a}')
     d2b = (hp.ttgg(t1, tbar2, hatp34, hat5, ['-'] + list(hcase[-1]))
            * hp.gqq(negp34, q3, hat4, ['+']+ list(hcase[:-1]))) / s34
-    print(f'd2b =\n{d2b}\n')
     
     amp = d1 + d2a + d2b
     return amp
@@ -101,18 +97,20 @@ def tthqq(t1, tbar2, h3, q4, qbar5, hcase):
     s45 = hp.minkowski(p45)
     match hcase:
         case ['+', '-']:
-            d1 = 2 * ((2 * m * hp.sbraket(t1, qbar5) @ hp.abraket(q4, tbar2)
-                      - (t1.abra @ h3.momentum @ qbar5.sket) @ hp.abraket(q4, tbar2)
-                      + 2 * m * hp.abraket(t1, q4) @ hp.sbraket(qbar5, tbar2)
-                      - (t1.sbra @ h3.sketabra @ q4.aket) @ hp.sbraket(qbar5, tbar2))
-                      / ((q4.abra @ tbar2.momentum @ q4.sket + qbar5.abra @ tbar2.momentum @ qbar5.sket + s45) * s45))
-            d2 = 2 * ((hp.abraket(t1, qbar5) @ (2 * m * hp.sbraket(q4, tbar2) + q4.sbra @ h3.sketabra @ tbar2.aket)
-                       + hp.sbraket(t1, q4) @ (2 * m * hp.abraket(qbar5, tbar2) + qbar5.abra @ h3.momentum @ tbar2.sket))
-                      / ((q4.abra @ t1.momentum @ q4.sket + qbar5.abra @ t1.momentum @ qbar5.sket + s45) * s45))
+            d1 = 2 * (((2 * m * hp.abraket(t1, qbar5) - (t1.sbra @ h3.sketabra @ qbar5.aket)) @ hp.sbraket(q4, tbar2)
+                      + (2 * m * hp.sbraket(t1, q4) - (t1.abra @ h3.momentum @ q4.sket)) @ hp.sbraket(qbar5, tbar2))
+                      / (((q4.abra @ tbar2.momentum @ q4.sket) + (qbar5.abra @ tbar2.momentum @ qbar5.sket) + s45) * s45))
+            d2 = 2 * ((hp.abraket(t1, qbar5) @ (2 * m * hp.sbraket(q4, tbar2) + (q4.sbra @ h3.sketabra @ tbar2.aket))
+                       + hp.sbraket(t1, q4) @ (2 * m * hp.abraket(qbar5, tbar2) + (qbar5.abra @ h3.momentum @ tbar2.sket)))
+                      / (((q4.abra @ t1.momentum @ q4.sket) + (qbar5.abra @ t1.momentum @ qbar5.sket) + s45) * s45))
             return d1 + d2
         case ['-', '+']:
-            d1 = 0
-            d2 = 0
+            d1 = 2 * (((2 * m * hp.abraket(t1, q4) - (t1.sbra @ h3.sketabra @ q4.aket)) @ hp.sbraket(qbar5, tbar2)
+                      + (2 * m * hp.sbraket(t1, qbar5) - (t1.abra @ h3.momentum @ qbar5.sket)) @ hp.sbraket(q4, tbar2))
+                      / (((q4.abra @ tbar2.momentum @ q4.sket) + (qbar5.abra @ tbar2.momentum @ qbar5.sket) + s45) * s45))
+            d2 = 2 * ((hp.abraket(t1, q4) @ (2 * m * hp.sbraket(qbar5, tbar2) + (qbar5.sbra @ h3.sketabra @ tbar2.aket))
+                       + hp.sbraket(t1, qbar5) @ (2 * m * hp.abraket(q4, tbar2) + (q4.abra @ h3.momentum @ tbar2.sket)))
+                      / (((q4.abra @ t1.momentum @ q4.sket) + (qbar5.abra @ t1.momentum @ qbar5.sket) + s45) * s45))
             return d1 + d2
     return 0
 
@@ -274,5 +272,46 @@ def tthqqgg(t1, tbar2, h3, q4, qbar5, g6, g7, hcase):
     return amp
 
 def tthqqqq(t1, tbar2, h3, q4, qbar5, q6, qbar7, hcase):
-    amp = None
+    P = [t1, qbar7]
+    p17 = t1.vector + qbar7.vector
+    s17 = hp.minkowski(p17)
+    hat6, hat7 = hp.onShell(q6, qbar7, P, hcase, side='left')
+    hatp17 = hp.massive(*(t1.vector + hat7.vector))
+    negp17 = hp.massive(*(-t1.vector - hat7.vector))
+    d1 = (hp.ttg(t1, hatp17, hat7, hcase[3], ref=q6)
+          @ tthqqg(negp17, tbar2, h3, q4, qbar5, hat6, hcase[:3])) / (s17 - t1.mass**2)
+
+    P = [tbar2, q4, qbar5, q6]
+    p2456 = tbar2.vector + q4.vector + qbar5.vector + q6.vector
+    s2456 = hp.minkowski(p2456)
+    hat6, hat7 = hp.onShell(q6, qbar7, P, hcase, side='right')
+    hatp2456 = hp.massive(*(tbar2.vector + q4.vector + qbar5.vector + hat6.vector))
+    negp2456 = hp.massive(*(-tbar2.vector - q4.vector - qbar5.vector - hat6.vector))
+    d2 = (tthg(t1, hatp2456, h3, qbar7, hcase[3], q6)
+          @ hp.ttqqg(negp2456, tbar2, q4, qbar5, hat6, hcase[:3])) / (s2456 - t1.mass**2)
+
+    P = [q4, qbar5, q6]
+    p456 = q4.vector + qbar5.vector + q6.vector
+    s456 = hp.minkowski(p456)
+    hat6, hat7 = hp.onShell(q6, qbar7, P, hcase, side='right')
+    hatp456 = hp.massless(*(q4.vector + qbar5.vector + hat6.vector))
+    negp456 = hp.massless(*(-q4.vector - qbar5.vector - hat6.vector))
+    d3a = (tthgg(t1, tbar2, h3, negp456, hat7, ['+'] + list(hcase[3]))
+           @ hp.gqqg(hatp456, q4, qbar5, hat6, ['-'] + list(hcase[:3]))) / s456
+    d3b = (tthgg(t1, tbar2, h3, negp456, hat7, ['-'] + list(hcase[3]))
+           @ hp.gqqg(hatp456, q4, qbar5, hat6, ['+'] + list(hcase[:3]))) / s456
+
+    P = [qbar5, q6]
+    p56 = qbar5.vector + q6.vector
+    s56 = hp.minkowski(p56)
+    hat6, hat7 = hp.onShell(q6, qbar7, P, hcase, side='right')
+    hatp56 = hp.massless(*(qbar5.vector + hat6.vector))
+    negp56 = hp.massless(*(-qbar5.vector - hat6.vector))
+    hcase4p7a = list(hcase[0]) + ['+'] + list(hcase[3])
+    hcase4p7b = list(hcase[0]) + ['-'] + list(hcase[3])
+    d4a = (tthggg(t1, tbar2, h3, q4, negp56, hat7, hcase4p7a)
+           @ hp.ggg(hatp56, qbar5, q6, ['-'] + list(hcase[1:3]))) / s56
+    d4b = (tthggg(t1, tbar2, h3, q4, negp56, hat7, hcase4p7b)
+           @ hp.ggg(hatp56, qbar5, q6, ['+'] + list(hcase[1:3]))) / s56
+    amp = d1 + d2 + d3a + d3b + d4a + d4b
     return amp
