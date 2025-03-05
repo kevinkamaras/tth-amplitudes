@@ -13,23 +13,26 @@ hcases = [['-', '+', '+'],
           ['+', '-', '+'],
           ['-', '+', '-']]
 
-ttqqgs = [core.ttqqg(t1, tbar2, q3, qbar4, g5, hcase) for hcase in hcases]
+# ttqqgs = [core.ttqqg(t1, tbar2, q3, qbar4, g5, hcase) for hcase in hcases]
+ttqqg = core.ttqqg(t1, tbar2, q3, qbar4, g5, hcase)
+print(f'ttqqg =\n{ttqqg}')
 # for ttqqg in ttqqgs:
 #      print(ttqqg)
-
 d1 = 1j * (((t1.sbra @ (qbar4.sketabra + g5.sketabra) @ t1.momentum @ g5.sket
       + hp.sbraket(t1, g5) @ hp.abraket(qbar4, g5) @ hp.sbraket(g5, qbar4)) @ hp.abraket(q3, tbar2)
       + hp.abraket(t1, q3) @ g5.sbra @ t1.sketabra @ (qbar4.momentum + g5.momentum) @ tbar2.sket)
       * (qbar4.abra @ t1.momentum @ g5.sket) / ((g5.abra @ t1.momentum @ g5.sket)
                                                 * hp.abraket(qbar4, g5) * hp.abraket(q3, qbar4)*
                                                 (q3.sbra @ (qbar4.sketabra + g5.sketabra) @ t1.momentum @ g5.sket)))
-# print(f'd1 =\n{d1}')
+
 # print(f'|d1|^2 =\n{abs(d1)**2}')
 p345 = q3.vector + qbar4.vector + g5.vector
 s345 = hp.minkowski(p345)
 d2 = (t1.mass * hp.sbraket(q3, g5) * hp.sbraket(qbar4, g5)**2 * hp.abraket(t1, tbar2)
       / (s345 * hp.sbraket(q3, qbar4) * (q3.sbra @ (qbar4.sketabra + g5.sketabra) @ t1.momentum @ g5.sket)))
 # print(f'|d2a|^2 =\n{abs(d2)**2}\n')
+
+print(f'other ttqqg =\n{d1 + d2}')
 
 m = 171
 

@@ -151,7 +151,7 @@ def gqq(g1, q2, qbar3, hcase):
 def ttg(t1, tbar2, g3, hcase, ref):
     match hcase:
         case '+':
-            amp = (ref.abra @ t1.momentum @ g3.sket) * sbraket(t1, tbar2) / (t1.mass * abraket(ref, g3))
+            amp = (ref.abra @ t1.momentum @ g3.sket) * abraket(t1, tbar2) / (t1.mass * abraket(ref, g3))
             return amp / 1j
         case '-':
             amp = (g3.abra @ t1.momentum @ ref.sket) * sbraket(t1, tbar2) / (t1.mass * sbraket(g3, ref))
@@ -221,9 +221,9 @@ def ttqq(t1, tbar2, q3, qbar4, hcase):
     s34 = minkowski(p34)
     match hcase:
         case ['+', '-']:
-            amp = (abraket(t1, q3) @ sbraket(qbar4, tbar2) + sbraket(t1, qbar4) @ abraket(q3, tbar2)) / s34
+            amp = (abraket(t1, qbar4) @ sbraket(q3, tbar2) + sbraket(t1, q3) @ abraket(qbar4, tbar2)) / s34
             return amp / (-1j)
         case ['-', '+']:
-            amp = (abraket(t1, qbar4) @ sbraket(q3, tbar2) + sbraket(t1, q3) @ abraket(qbar4, tbar2)) / s34
+            amp = (abraket(t1, q3) @ sbraket(qbar4, tbar2) + sbraket(t1, qbar4) @ abraket(q3, tbar2)) / s34
             return amp / (-1j)
     return [[0, 0], [0, 0]]

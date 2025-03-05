@@ -49,22 +49,30 @@ def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
     P = [t1, g5]
     p15 = t1.vector + g5.vector
     s15 = hp.minkowski(p15)
-    hat4, hat5, z = hp.onShell(qbar4, g5, P, hcase, side='left')
+    hat4, hat5, z15 = hp.onShell(qbar4, g5, P, hcase, side='left')
     hatp15 = hp.massive(*(t1.vector + hat5.vector))
     negp15 = hp.massive(*(-t1.vector - hat5.vector))
     d1 = -1j * (hp.ttg(t1, negp15, hat5, hcase[-1], ref=qbar4)
           @ hp.ttqq(hatp15, tbar2, q3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
+    
+    print(hatp15.aket @ hatp15.sbra)
+    print(hatp15.momentum)
+    print(f'ratio =\n{(hatp15.aket @ hatp15.sbra) / hatp15.momentum}')
 
     P = [q3, qbar4]
     p34 = q3.vector + qbar4.vector
     s34 = hp.minkowski(p34)
-    hat4, hat5, z = hp.onShell(qbar4, g5, P, hcase, side='right')
+    hat4, hat5, z34 = hp.onShell(qbar4, g5, P, hcase, side='right')
     hatp34 = hp.massless(*(q3.vector + hat4.vector))
     negp34 = hp.massless(*(-q3.vector - hat4.vector))
     d2a = (hp.ttgg(t1, tbar2, hatp34, hat5, ['+'] + list(hcase[-1]))
            * hp.gqq(negp34, q3, hat4, ['-']+ list(hcase[:-1]))) / s34
+    
+    print(f'ttgg =\n{hp.ttgg(t1, tbar2, hatp34, hat5, ['+'] + list(hcase[-1]))}')
+    print(f'gqq =\n{hp.gqq(negp34, q3, hat4, ['-']+ list(hcase[:-1]))}')
     d2b = (hp.ttgg(t1, tbar2, hatp34, hat5, ['-'] + list(hcase[-1]))
            * hp.gqq(negp34, q3, hat4, ['+']+ list(hcase[:-1]))) / s34
+    
     
     amp = d1 + d2a + d2b
     return amp
