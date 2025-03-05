@@ -6,18 +6,18 @@ def tthg(t1, tbar2, h3, g4, hcase, ref):
         case '+':
             d1 = (hp.abraket(t1, ref) @ (g4.sbra @ t1.sketabra @ tbar2.aket)
                   - t1.mass * (hp.abraket(t1, ref) @ hp.sbraket(g4, tbar2))
-                  + hp.sbraket(t1, g4) @ (ref.abra @ (t1.momentum + g4.momentum) @ tbar2.sket)
-                  - t1.mass * (hp.sbraket(t1, g4) @ hp.abraket(ref, tbar2))) / (g4.abra @ t1.momentum @ g4.sket)
-            d2 = ((t1.abra @ (t1.momentum + h3.momentum) @ g4.sket) @ hp.abraket(ref, tbar2)
+                  + hp.sbraket(t1, g4) @ (ref.abra @ (t1.momentum() + g4.momentum()) @ tbar2.sket)
+                  - t1.mass * (hp.sbraket(t1, g4) @ hp.abraket(ref, tbar2))) / (g4.abra @ t1.momentum() @ g4.sket)
+            d2 = ((t1.abra @ (t1.momentum() + h3.momentum()) @ g4.sket) @ hp.abraket(ref, tbar2)
                   - t1.mass * (hp.abraket(t1, ref) @ hp.sbraket(g4, tbar2))
                   + (t1.sbra @ (t1.sketabra + h3.sketabra) @ ref.aket) @ hp.sbraket(g4, tbar2)
-                  - t1.mass * (hp.sbraket(t1, g4) @ hp.abraket(ref, tbar2))) / (g4.abra @ tbar2.momentum @ g4.sket)
+                  - t1.mass * (hp.sbraket(t1, g4) @ hp.abraket(ref, tbar2))) / (g4.abra @ tbar2.momentum() @ g4.sket)
             return (np.sqrt(2) / hp.abraket(ref, g4)) * (d1 + d2)
         case '-':
-            d1 = (hp.abraket(t1, ref) @ (g4.sbra @ h3.momentum @ tbar2.aket)
-                + hp.sbraket(t1, g4) @ (ref.abra @ h3.momentum @ tbar2.sket)) / (g4.abra @ t1.momentum @ g4.sket)
-            d2 = ((t1.abra @ h3.momentum @ g4.sket) @ hp.abraket(ref, tbar2)
-                + (t1.sbra @ h3.momentum @ ref.aket) @ hp.sbraket(g4, tbar2)) / (g4.abra @ tbar2.momentum @ g4.sket)
+            d1 = (hp.abraket(t1, ref) @ (g4.sbra @ h3.momentum() @ tbar2.aket)
+                + hp.sbraket(t1, g4) @ (ref.abra @ h3.momentum() @ tbar2.sket)) / (g4.abra @ t1.momentum() @ g4.sket)
+            d2 = ((t1.abra @ h3.momentum() @ g4.sket) @ hp.abraket(ref, tbar2)
+                + (t1.sbra @ h3.momentum() @ ref.aket) @ hp.sbraket(g4, tbar2)) / (g4.abra @ tbar2.momentum() @ g4.sket)
             return (np.sqrt(2) / hp.abraket(ref, g4)) * (d1 + d2)
     raise ValueError('missing gluon helicity')
 
@@ -53,11 +53,7 @@ def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
     hatp15 = hp.massive(*(t1.vector + hat5.vector))
     negp15 = hp.massive(*(-t1.vector - hat5.vector))
     d1 = -1j * (hp.ttg(t1, negp15, hat5, hcase[-1], ref=qbar4)
-          @ hp.ttqq(hatp15, tbar2, q3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
-    
-    print(hatp15.aket @ hatp15.sbra)
-    print(hatp15.momentum)
-    print(f'ratio =\n{(hatp15.aket @ hatp15.sbra) / hatp15.momentum}')
+          @ hp.epsLow @ hp.ttqq(hatp15, tbar2, q3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
 
     P = [q3, qbar4]
     p34 = q3.vector + qbar4.vector
@@ -65,14 +61,11 @@ def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
     hat4, hat5, z34 = hp.onShell(qbar4, g5, P, hcase, side='right')
     hatp34 = hp.massless(*(q3.vector + hat4.vector))
     negp34 = hp.massless(*(-q3.vector - hat4.vector))
-    d2a = (hp.ttgg(t1, tbar2, hatp34, hat5, ['+'] + list(hcase[-1]))
-           * hp.gqq(negp34, q3, hat4, ['-']+ list(hcase[:-1]))) / s34
+    d2a = 1j * (hp.ttgg(t1, tbar2, hatp34, hat5, ['+'] + list(hcase[-1]))
+           * hp.gqq(negp34, q3, hat4, ['-']+ list(hcase[:-1]), ref=g5)) / s34
     
-    print(f'ttgg =\n{hp.ttgg(t1, tbar2, hatp34, hat5, ['+'] + list(hcase[-1]))}')
-    print(f'gqq =\n{hp.gqq(negp34, q3, hat4, ['-']+ list(hcase[:-1]))}')
     d2b = (hp.ttgg(t1, tbar2, hatp34, hat5, ['-'] + list(hcase[-1]))
-           * hp.gqq(negp34, q3, hat4, ['+']+ list(hcase[:-1]))) / s34
-    
+           * hp.gqq(negp34, q3, hat4, ['+']+ list(hcase[:-1]), ref=g5)) / s34
     
     amp = d1 + d2a + d2b
     return amp
@@ -106,19 +99,19 @@ def tthqq(t1, tbar2, h3, q4, qbar5, hcase):
     match hcase:
         case ['+', '-']:
             d1 = 2 * (((2 * m * hp.abraket(t1, qbar5) - (t1.sbra @ h3.sketabra @ qbar5.aket)) @ hp.sbraket(q4, tbar2)
-                      + (2 * m * hp.sbraket(t1, q4) - (t1.abra @ h3.momentum @ q4.sket)) @ hp.sbraket(qbar5, tbar2))
-                      / (((q4.abra @ tbar2.momentum @ q4.sket) + (qbar5.abra @ tbar2.momentum @ qbar5.sket) + s45) * s45))
+                      + (2 * m * hp.sbraket(t1, q4) - (t1.abra @ h3.momentum() @ q4.sket)) @ hp.sbraket(qbar5, tbar2))
+                      / (((q4.abra @ tbar2.momentum() @ q4.sket) + (qbar5.abra @ tbar2.momentum() @ qbar5.sket) + s45) * s45))
             d2 = 2 * ((hp.abraket(t1, qbar5) @ (2 * m * hp.sbraket(q4, tbar2) + (q4.sbra @ h3.sketabra @ tbar2.aket))
-                       + hp.sbraket(t1, q4) @ (2 * m * hp.abraket(qbar5, tbar2) + (qbar5.abra @ h3.momentum @ tbar2.sket)))
-                      / (((q4.abra @ t1.momentum @ q4.sket) + (qbar5.abra @ t1.momentum @ qbar5.sket) + s45) * s45))
+                       + hp.sbraket(t1, q4) @ (2 * m * hp.abraket(qbar5, tbar2) + (qbar5.abra @ h3.momentum() @ tbar2.sket)))
+                      / (((q4.abra @ t1.momentum() @ q4.sket) + (qbar5.abra @ t1.momentum() @ qbar5.sket) + s45) * s45))
             return d1 + d2
         case ['-', '+']:
             d1 = 2 * (((2 * m * hp.abraket(t1, q4) - (t1.sbra @ h3.sketabra @ q4.aket)) @ hp.sbraket(qbar5, tbar2)
-                      + (2 * m * hp.sbraket(t1, qbar5) - (t1.abra @ h3.momentum @ qbar5.sket)) @ hp.sbraket(q4, tbar2))
-                      / (((q4.abra @ tbar2.momentum @ q4.sket) + (qbar5.abra @ tbar2.momentum @ qbar5.sket) + s45) * s45))
+                      + (2 * m * hp.sbraket(t1, qbar5) - (t1.abra @ h3.momentum() @ qbar5.sket)) @ hp.sbraket(q4, tbar2))
+                      / (((q4.abra @ tbar2.momentum() @ q4.sket) + (qbar5.abra @ tbar2.momentum() @ qbar5.sket) + s45) * s45))
             d2 = 2 * ((hp.abraket(t1, q4) @ (2 * m * hp.sbraket(qbar5, tbar2) + (qbar5.sbra @ h3.sketabra @ tbar2.aket))
-                       + hp.sbraket(t1, qbar5) @ (2 * m * hp.abraket(q4, tbar2) + (q4.abra @ h3.momentum @ tbar2.sket)))
-                      / (((q4.abra @ t1.momentum @ q4.sket) + (qbar5.abra @ t1.momentum @ qbar5.sket) + s45) * s45))
+                       + hp.sbraket(t1, qbar5) @ (2 * m * hp.abraket(q4, tbar2) + (q4.abra @ h3.momentum() @ tbar2.sket)))
+                      / (((q4.abra @ t1.momentum() @ q4.sket) + (qbar5.abra @ t1.momentum() @ qbar5.sket) + s45) * s45))
             return d1 + d2
     return 0
 
