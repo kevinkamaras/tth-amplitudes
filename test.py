@@ -90,3 +90,33 @@ ratio = spinSum / result
 # print(f'<|M|^2> = {spinSum}')
 # print(f'<|M|^2> = {result}')
 # print(f'ratio = {ratio}')
+
+mtop = 171
+mhig = 125
+
+phitop = 1.27
+thetatop = 0.78
+ptop = 200
+phiglu = 0.97
+thetaglu = 2.5
+
+Etop = np.sqrt(ptop**2 + m**2)
+ptopx = ptop * np.sin(thetatop) * np.cos(phitop)
+ptopy = ptop * np.sin(thetatop) * np.sin(phitop)
+ptopz = ptop * np.cos(thetatop)
+
+Eglu = Etop - (mhig**2 / (4 * Etop))
+pglux = Eglu * np.sin(thetaglu) * np.cos(phiglu)
+pgluy = Eglu * np.sin(thetaglu) * np.sin(phiglu)
+pgluz = Eglu * np.cos(thetaglu)
+
+Ehig = np.sqrt(Eglu**2 + mhig**2)
+t1    = hp.massive(*[Etop, ptopx, ptopy, ptopz])
+tbar2 = hp.massive(*[Etop, -ptopx, -ptopy, -ptopz])
+h3    = hp.massive(*[-Ehig, pglux, pgluy, pgluz])
+g4    = hp.massless(*[-Eglu, -pglux, -pgluy, -pgluz])
+ref   = hp.massless(*[1, 1, 0, 0])
+hcase = '-'
+
+tthg = core.tthg(t1, tbar2, h3, g4, hcase, ref)
+print(f'tthg =\n{tthg}')
