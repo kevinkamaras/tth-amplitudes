@@ -1,4 +1,5 @@
 import amplitudes.amps as amps
+import amplitudes.core as core
 import tests
 
 # How to obtain an amplitude:
@@ -10,17 +11,34 @@ h3    = [   5,    0,  0,  1]
 g4    = [-7.5,  7.5,  0,  0]
 g5    = [-7.5, -7.5,  0,  0]
 g6    = [   1,    0,  1,  0]
+g7    = [   1,    0, -1,  0]
 
 # Choose a helicity case by listing the helicities of the massless particles as + or - in order
-helicity_case = ['+', '-', '-']
+hcase = ['+', '-', '+', '+']
 
 # All the color-ordered helicity amplitudes for (tth + n partons) are in amps.py.
 # To obtain a helicity amplitude call the function for the desired amplitude and helicity case.
 # Returns the helicity amplitude as a 2x2 matrix.
 # Spin of the top quark runs along axis 0, spin of the anti-top quark runs along axis 1.
-tthggg_amplitude = amps.tthggg(t1, tbar2, h3, g4, g5, g6, helicity_case)
+tthggg_amplitude = amps.tthggg(t1, tbar2, h3, g4, g5, g6, hcase)
 
-print(f'\nexample amplitude tthggg =\n{tthggg_amplitude}\n')
+# print(f'\nexample amplitude tthggg =\n{tthggg_amplitude}\n')
+
+t1    = [   5,   -3, -1,  0]
+tbar2 = [   5,    0,  1, -4]
+h3    = [   5,    0,  0,  1]
+g4    = [-7.5,  7.5,  0,  0]
+g5    = [-7.5, -7.5,  0,  0]
+g6    = [   1,    0,  1,  0]
+g7    = [   1,    0, -1,  0]
+print(f'tthg =\n{amps.tthg(t1, tbar2, h3, g4, hcase[0], ref=[1, 1, 0, 0])}')
+print(f'tthgg =\n{amps.tthgg(t1, tbar2, h3, g4, g5, hcase[:2])}')
+print(f'tthqq =\n{amps.tthqq(t1, tbar2, h3, g4, g5, hcase[:2])}')
+print(f'tthggg =\n{amps.tthggg(t1, tbar2, h3, g4, g5, g6, hcase[:3])}')
+print(f'tthqqg =\n{amps.tthqqg(t1, tbar2, h3, g4, g5, g6, hcase[:3])}')
+print(f'tthgggg =\n{amps.tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase)}')
+print(f'tthqqgg =\n{amps.tthqqgg(t1, tbar2, h3, g4, g5, g6, g7, hcase)}')
+print(f'tthqqqq =\n{amps.tthqqqq(t1, tbar2, h3, g4, g5, g6, g7, hcase)}')
 
 
 # Some tests that I ran to check my amplitudes:

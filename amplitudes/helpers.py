@@ -25,7 +25,7 @@ class massless:
         pt = p1 + 1j*p2
         pb = p1 - 1j*p2
         theta = np.heaviside(-np.real(p0), 0)
-        if pp == 0:
+        if pp <= 1e-5:
             raise ValueError('pp = 0')
         else:
             self.aket = ( 1j)**theta * np.array([[-pb / np.emath.sqrt(pp)], [np.emath.sqrt(pp)]])
@@ -56,7 +56,7 @@ class massive:
         pt = p1 + 1j*p2
         pb = p1 - 1j*p2
         theta = np.heaviside(-np.real(E), 0)
-        if pp == 0:
+        if pp <= 1e-5:
             raise ValueError('pp = 0')
         else:
             I1 =  np.emath.sqrt((E - P) / 2 / P) * np.array([[np.emath.sqrt(pp)], [ pt / np.emath.sqrt(pp)]])
@@ -129,10 +129,10 @@ def onShell(pi, pj, P, hcase, side):
                        + P[-2].abra @ np.sum([p.momentum() for p in P[:-2]], axis=0) @ P[-2].sket)
                        / pj.abra @ np.sum([p.momentum() for p in P[:-1]], axis=0) @ pi.sket)
             z = z[0, 0]
-            hati.sket = pi.aket + z * pj.aket
-            hati.sbra = pi.abra + z * pj.abra
+            hati.aket = pi.aket + z * pj.aket
+            hati.abra = pi.abra + z * pj.abra
             hati.vector = np.array([(hati.abra @ sigma @ hati.sket)[0, 0] / 2 for sigma in pauli])
-            hatj.abra = pj.sbra - z * pi.sbra
-            hatj.aket = pj.sket - z * pi.sket
+            hatj.sbra = pj.sbra - z * pi.sbra
+            hatj.sket = pj.sket - z * pi.sket
             hatj.vector = np.array([(hatj.abra @ sigma @ hatj.sket)[0, 0] / 2 for sigma in pauli])
     return hati, hatj

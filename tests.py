@@ -53,6 +53,7 @@ def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
 
     t1    = hp.massive([Etop, ptopx, ptopy, ptopz])
     tbar2 = hp.massive([Etop, -ptopx, -ptopy, -ptopz])
+    print(hp.abraket(t1, tbar2))
     g3    = hp.massless([-Eglu, pglux, pgluy, pgluz])
     g4    = hp.massless([-Eglu, -pglux, -pgluy, -pgluz])
     hcases = [['+', '+'],
@@ -63,6 +64,7 @@ def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
     hcases2 = [[hcase[1], hcase[0]] for hcase in hcases]
 
     amps1234 = [core.ttgg(t1, tbar2, g3, g4, hcase) for hcase in hcases]
+    print(amps1234[0])
     amps1243 = [core.ttgg(t1, tbar2, g4, g3, hcase) for hcase in hcases2]
     subleadings = [amp1234 + amp1243 for amp1234, amp1243 in zip(amps1234, amps1243)]
 
