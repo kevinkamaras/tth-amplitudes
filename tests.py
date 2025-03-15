@@ -1,31 +1,38 @@
 import numpy as np
 import amplitudes.helpers as hp
 import amplitudes.core as core
+import amplitudes.amps as amps
 
-t1    = hp.massive(*[5, -3, -1, 0])
-tbar2 = hp.massive(*[5, 0, 1, -4])
-q3    = hp.massless(*[5, 3, 0, 4])
-qbar4 = hp.massless(*[-7.5, 7.5, 0, 0])
-g5    = hp.massless(*[-7.5, -7.5, 0, 0])
-hcase = ['-', '+', '+']
-
-ttqqg = core.ttqqg(t1, tbar2, q3, qbar4, g5, hcase)
-
-d1 = 1j * (((t1.sbra @ (qbar4.sketabra() + g5.sketabra() ) @ t1.momentum() @ g5.sket
+def ttqqg_test(momenta):
+     t1 = hp.massive(momenta[0])
+     tbar2 = hp.massive(momenta[1])
+     q3 = hp.massless(momenta[2])
+     qbar4 = hp.massless(momenta[3])
+     g5 = hp.massless(momenta[4])
+     hcase = ['-', '+', '+']
+     ttqqg = core.ttqqg(t1, tbar2, q3, qbar4, g5, hcase)
+     
+     d1 = 1j * (((t1.sbra @ (qbar4.sketabra() + g5.sketabra() ) @ t1.momentum() @ g5.sket
       + hp.sbraket(t1, g5) @ hp.abraket(qbar4, g5) @ hp.sbraket(g5, qbar4)) @ hp.abraket(q3, tbar2)
       + hp.abraket(t1, q3) @ g5.sbra @ t1.sketabra() @ (qbar4.momentum() + g5.momentum()) @ tbar2.sket)
       * (qbar4.abra @ t1.momentum() @ g5.sket) / ((g5.abra @ t1.momentum() @ g5.sket)
                                                 * hp.abraket(qbar4, g5) * hp.abraket(q3, qbar4) *
                                                 (q3.sbra @ (qbar4.sketabra() + g5.sketabra()) @ t1.momentum() @ g5.sket)))
 
-p345 = q3.vector + qbar4.vector + g5.vector
-s345 = hp.minkowski(p345)
-d2a = 1j * ((t1.mass * hp.sbraket(q3, g5) * hp.sbraket(qbar4, g5)**2 * hp.abraket(t1, tbar2)) 
-            / (s345 * hp.sbraket(q3, qbar4) * (q3.sbra @ (qbar4.sketabra() + g5.sketabra()) @ t1.momentum() @ g5.sket)))
-
-# print(f'ttqqg =\n{ttqqg}')
-# print(f'other ttqqg =\n{d1 + d2a}')
-# print(f'ratio =\n{ttqqg / (d1 + d2a)}')
+     p345 = q3.vector + qbar4.vector + g5.vector
+     s345 = hp.minkowski(p345)
+     d2 = 1j * ((t1.mass * hp.sbraket(q3, g5) * hp.sbraket(qbar4, g5)**2 * hp.abraket(t1, tbar2)) 
+               / (s345 * hp.sbraket(q3, qbar4) * (q3.sbra @ (qbar4.sketabra() + g5.sketabra()) @ t1.momentum() @ g5.sket)))
+     
+     diff = ttqqg - (d1 + d2)
+     if diff.all() <= 1:
+          print('                ------------------------------')
+          print('test for ttqqg passed!\n')
+          print(f'amplitude from my ttqqg function:\n{ttqqg}\n')
+          print(f'amplitude from explicit expression in Campbell2023:\n{d1 + d2}\n')
+          print(f'diff =\n{diff}')
+          print('                ------------------------------')
+     return
 
 m = 171
 
@@ -45,10 +52,10 @@ pglux = Eglu * np.sin(thetaglu) * np.cos(phiglu)
 pgluy = Eglu * np.sin(thetaglu) * np.sin(phiglu)
 pgluz = Eglu * np.cos(thetaglu)
 
-t1    = hp.massive(*[Etop, ptopx, ptopy, ptopz])
-tbar2 = hp.massive(*[Etop, -ptopx, -ptopy, -ptopz])
-g3    = hp.massless(*[-Eglu, pglux, pgluy, pgluz])
-g4    = hp.massless(*[-Eglu, -pglux, -pgluy, -pgluz])
+t1    = hp.massive([Etop, ptopx, ptopy, ptopz])
+tbar2 = hp.massive([Etop, -ptopx, -ptopy, -ptopz])
+g3    = hp.massless([-Eglu, pglux, pgluy, pgluz])
+g4    = hp.massless([-Eglu, -pglux, -pgluy, -pgluz])
 hcases = [['+', '+'],
           ['-', '-'],
           ['+', '-'],
@@ -56,8 +63,8 @@ hcases = [['+', '+'],
 
 hcases2 = [[hcase[1], hcase[0]] for hcase in hcases]
 
-amps1234 = [hp.ttgg(t1, tbar2, g3, g4, hcase) for hcase in hcases]
-amps1243 = [hp.ttgg(t1, tbar2, g4, g3, hcase) for hcase in hcases2]
+amps1234 = [core.ttgg(t1, tbar2, g3, g4, hcase) for hcase in hcases]
+amps1243 = [core.ttgg(t1, tbar2, g4, g3, hcase) for hcase in hcases2]
 subleadings = [amp1234 + amp1243 for amp1234, amp1243 in zip(amps1234, amps1243)]
 
 N = 3
@@ -111,12 +118,12 @@ pgluy = Eglu * np.sin(thetaglu) * np.sin(phiglu)
 pgluz = Eglu * np.cos(thetaglu)
 
 Ehig = np.sqrt(Eglu**2 + mhig**2)
-t1    = hp.massive(*[Etop, ptopx, ptopy, ptopz])
-tbar2 = hp.massive(*[Etop, -ptopx, -ptopy, -ptopz])
-h3    = hp.massive(*[-Ehig, pglux, pgluy, pgluz])
-g4    = hp.massless(*[-Eglu, -pglux, -pgluy, -pgluz])
-ref   = hp.massless(*[1, 1, 0, 0])
+t1    = hp.massive([Etop, ptopx, ptopy, ptopz])
+tbar2 = hp.massive([Etop, -ptopx, -ptopy, -ptopz])
+h3    = hp.massive([-Ehig, pglux, pgluy, pgluz])
+g4    = hp.massless([-Eglu, -pglux, -pgluy, -pgluz])
+ref   = hp.massless([1, 1, 0, 0])
 hcase = '-'
 
 tthg = core.tthg(t1, tbar2, h3, g4, hcase, ref)
-print(f'tthg =\n{tthg}')
+# print(f'tthg =\n{tthg}')
