@@ -31,7 +31,8 @@ def ttqqg_test(momenta):
         print('test for ttqqg passed!\n')
         print(f'amplitude from my ttqqg function:\n{ttqqg}\n')
         print(f'amplitude from explicit expression in Campbell2023:\n{d1 + d2}\n')
-        print(f'|diff| =\n{abs(diff)}')
+        # print(f'|diff| =\n{abs(diff)}')
+        print('the two amplitudes are equal')
         print('----------------------------------------------\n')
     else:
         print('----------------------------------------------')
@@ -53,7 +54,6 @@ def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
 
     t1    = hp.massive([Etop, ptopx, ptopy, ptopz])
     tbar2 = hp.massive([Etop, -ptopx, -ptopy, -ptopz])
-    print(hp.abraket(t1, tbar2))
     g3    = hp.massless([-Eglu, pglux, pgluy, pgluz])
     g4    = hp.massless([-Eglu, -pglux, -pgluy, -pgluz])
     hcases = [['+', '+'],
@@ -64,7 +64,6 @@ def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
     hcases2 = [[hcase[1], hcase[0]] for hcase in hcases]
 
     amps1234 = [core.ttgg(t1, tbar2, g3, g4, hcase) for hcase in hcases]
-    print(amps1234[0])
     amps1243 = [core.ttgg(t1, tbar2, g4, g3, hcase) for hcase in hcases2]
     subleadings = [amp1234 + amp1243 for amp1234, amp1243 in zip(amps1234, amps1243)]
 
@@ -100,7 +99,8 @@ def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
         print('test for ttgg passed!\n')
         print(f'cross section from my ttgg function:\n{spinSum}\n')
         print(f'cross-section from explicit expression in Gluck1978:\n{result}\n')
-        print(f'diff =\n{diff}')
+        # print(f'diff =\n{diff}')
+        print('the cross sections are equal')
         print('----------------------------------------------\n')
     else:
         print('----------------------------------------------')
@@ -139,12 +139,15 @@ def tthg_test(phitop, thetatop, ptop, phiglu, thetaglu, hcase):
 
     print('\nTEST FOR tthg:')
     print('----------------------------------------------')
-    if abs(tthg1 - tthg2).all() <= 1:
+    if (np.sum(abs(tthg1 - tthg2)) <= 1e-5 and
+        np.sum(abs(tthg1 - tthg3)) <= 1e-5 and
+        np.sum(abs(tthg1 - tthg4)) <= 1e-5):
         print('test for tthg passed!\n')
         print(f'amplitude for ref1:\n{tthg1}\n')
         print(f'amplitude for ref2:\n{tthg2}\n')
         print(f'amplitude for ref3:\n{tthg3}\n')
         print(f'amplitude for ref4:\n{tthg4}\n')
+        print('the amplitude is independent of the reference spinor')
         print('----------------------------------------------\n')
     else:
         print('----------------------------------------------')

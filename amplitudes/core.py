@@ -5,16 +5,28 @@ def ggg(g1, g2, g3, hcase):
     '''from Campbell2023'''
     match hcase:
         case ['-', '-', '+']:
+            if abs(hp.abraket(g1, g2)) <= 1e-10:
+                return 0
             return hp.abraket(g1, g2)**3 / hp.abraket(g2, g3) / hp.abraket(g3, g1)
         case ['+', '+', '-']:
+            if abs(hp.sbraket(g1, g2)) <= 1e-10:
+                return 0
             return hp.sbraket(g1, g2)**3 / hp.sbraket(g2, g3) / hp.sbraket(g3, g1)
         case ['-', '+', '-']:
+            if abs(hp.abraket(g3, g1)) <= 1e-10:
+                return 0
             return hp.abraket(g3, g1)**3 / hp.abraket(g1, g2) / hp.abraket(g2, g3)
         case ['+', '-', '+']:
+            if abs(hp.sbraket(g3, g1)) <= 1e-10:
+                return 0
             return hp.sbraket(g3, g1)**3 / hp.sbraket(g1, g2) / hp.sbraket(g2, g3)
         case ['+', '-', '-']:
+            if abs(hp.abraket(g2, g3)) <= 1e-10:
+                return 0
             return hp.abraket(g2, g3)**3 / hp.abraket(g1, g2) / hp.abraket(g3, g1)
         case ['-', '+', '+']:
+            if abs(hp.sbraket(g2, g3)) <= 1e-10:
+                return 0
             return hp.sbraket(g2, g3)**3 / hp.sbraket(g1, g2) / hp.sbraket(g3, g1)
     return 0
 
@@ -22,12 +34,20 @@ def gqq(g1, q2, qbar3, hcase):
     '''from Arkani-Hamed2021'''
     match hcase:
         case ['+', '-', '+']:
+            if abs(hp.sbraket(qbar3, g1)) <= 1e-10:
+                return 0
             return (-1j) * hp.sbraket(qbar3, g1)**2 / hp.sbraket(q2, qbar3)
         case ['+', '+', '-']:
+            if abs(hp.sbraket(g1, q2)) <= 1e-10:
+                return 0
             return (-1j) * hp.sbraket(g1, q2)**2 / hp.sbraket(q2 ,qbar3)
         case ['-', '-', '+']:
+            if abs(hp.abraket(g1, q2)) <= 1e-10:
+                return 0
             return (-1j) * hp.abraket(g1, q2)**2 / hp.abraket(q2 ,qbar3)
         case ['-', '+', '-']:
+            if abs(hp.abraket(qbar3, g1)) <= 1e-10:
+                return 0
             return (-1j) * hp.abraket(qbar3, g1)**2 / hp.abraket(q2, qbar3)
     return 0
 
@@ -46,6 +66,7 @@ def tth(t1, tbar2, h3):
     return amp
 
 def gggg(g1, g2, g3, g4, hcase):
+    hcase = np.array(hcase)
     momenta = np.array([g1, g2, g3, g4])
     negatives = np.array(momenta[hcase == '-'])
     # if not MHV, amplitude is zero
@@ -72,13 +93,18 @@ def gqqg(g1, q2, qbar3, g4, hcase):
     return 0
 
 def qqqq(q1, qbar2, q3, qbar4, hcase):
-    momenta = np.array([q1, qbar2, q3, qbar4])
-    negatives = np.array(momenta[hcase == '-'])
-    # if not MHV, amplitude is zero
-    if len(negatives) != 2:
-        return 0
-    else:
-        return hp.PT4(q1, qbar2, q3, qbar4, negatives)
+    p34 = q3.vector + qbar4.vector
+    s34 = hp.minkowski(p34)
+    match hcase:
+        case ['+', '-', '+', '-']:
+            return hp.sbraket(q1, q3) * hp.abraket(qbar4, qbar2) / s34
+        case ['+', '-', '-', '+']:
+            return hp.sbraket(q1, qbar4) * hp.abraket(q3, qbar2) / s34
+        case ['-', '+', '+', '-']:
+            return hp.abraket(q1, qbar4) * hp.sbraket(q3, qbar2) / s34
+        case ['-', '+', '-', '+']:
+            return hp.abraket(q1, q3) * hp.sbraket(qbar4, qbar2) / s34
+    return 0
 
 def ttgg(t1, tbar2, g4, g3, hcase):
     '''from Campbell2023'''
@@ -120,6 +146,8 @@ def ttqq(t1, tbar2, q3, qbar4, hcase):
     return np.array([[0, 0], [0, 0]])
 
 def tthg(t1, tbar2, h3, g4, hcase, ref):
+    if abs(hp.abraket(g4, ref)) <= 1e-10 and abs(hp.sbraket(g4, ref)) <= 1e-10:
+        raise ValueError('please pick a different reference momentum ref ~/~ g4')
     match hcase:
         case '+':
             d1 = ((hp.abraket(t1, ref)
@@ -132,7 +160,7 @@ def tthg(t1, tbar2, h3, g4, hcase, ref):
                    + (2 * t1.mass * hp.sbraket(t1, g4) - (t1.abra @ h3.momentum() @ g4.sket))
                    @ hp.abraket(ref, tbar2))
                   / (g4.abra @ tbar2.momentum() @ g4.sket))
-            return (np.sqrt(2) / hp.abraket(g4, ref)) * (d1 + d2)
+            return (1 / hp.abraket(g4, ref)) * (d1 + d2)
         case '-':
             d1 = ((hp.sbraket(t1, ref)
                   @ (2 * t1.mass * hp.abraket(g4, tbar2) + (g4.abra @ h3.momentum() @ tbar2.sket))
@@ -144,7 +172,7 @@ def tthg(t1, tbar2, h3, g4, hcase, ref):
                    + (2 * t1.mass * hp.abraket(t1, g4) - (t1.sbra @ h3.sketabra() @ g4.aket))
                    @ hp.sbraket(ref, tbar2))
                   / (g4.abra @ tbar2.momentum() @ g4.sket))
-            return (np.sqrt(2) / hp.sbraket(ref, g4)) * (d1 + d2)
+            return (1 / hp.sbraket(ref, g4)) * (d1 + d2)
     raise ValueError('missing gluon helicity')
 
 def ttggg(t1, tbar2, g3, g4, g5, hcase):
@@ -154,19 +182,19 @@ def ttggg(t1, tbar2, g3, g4, g5, hcase):
     hat4, hat5 = hp.onShell(g4, g5, P, hcase, side='left')
     hatp15 = hp.massive((t1.vector + hat5.vector))
     negp15 = hp.massive((-t1.vector - hat5.vector))
-    d1 = (ttg(t1, hatp15, hat5, hcase[-1], ref=g4)
-          @ hp.epsLow @ ttgg(negp15, tbar2, g3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
-
+    d1 = (ttg(t1, negp15, hat5, hcase[-1], ref=g4)
+          @ hp.epsLow @ ttgg(hatp15, tbar2, g3, hat4, hcase[:-1])) / (s15 - t1.mass**2)
+    
     P = [g3, g4]
     p34 = g3.vector + g4.vector
     s34 = hp.minkowski(p34)
     hat4, hat5 = hp.onShell(g4, g5, P, hcase, side='right')
     hatp34 = hp.massless((g3.vector + hat4.vector))
     negp34 = hp.massless((-g3.vector - hat4.vector))
-    d2a = (ttgg(t1, tbar2, negp34, hat5, ['+'] + list(hcase[1]))
-           * ggg(hatp34, g3, hat4, ['-'] + list(hcase[0]))) / s34
-    d2b = (ttgg(t1, tbar2, negp34, hat5, ['-'] + list(hcase[1]))
-           * ggg(hatp34, g3, hat4, ['+'] + list(hcase[0]))) / s34
+    d2a = (ttgg(t1, tbar2, hatp34, hat5, ['+'] + list(hcase[-1]))
+           * ggg(negp34, g3, hat4, ['-'] + list(hcase[:-1]))) / s34
+    d2b = (ttgg(t1, tbar2, hatp34, hat5, ['-'] + list(hcase[-1]))
+           * ggg(negp34, g3, hat4, ['+'] + list(hcase[:-1]))) / s34
     
     amp = d1 + d2a + d2b
     return amp
@@ -192,7 +220,7 @@ def ttqqg(t1, tbar2, q3, qbar4, g5, hcase):
     
     d2b = 1j * (ttgg(t1, tbar2, hatp34, hat5, ['-'] + list(hcase[-1]))
                 * gqq(negp34, q3, hat4, ['+']+ list(hcase[:-1]))) / s34
-    
+
     amp = d1 + d2a + d2b
     return amp
 
@@ -205,6 +233,7 @@ def tthgg(t1, tbar2, h3, g4, g5, hcase):
     negp15 = hp.massive((-t1.vector - hat5.vector))
     d1 = (ttg(t1, negp15, hat5, hcase[1], ref=g4)
           @ hp.epsLow @ tthg(hatp15, tbar2, h3, hat4, hcase[0], ref=g5)) / (s15 - t1.mass**2)
+
     P = [tbar2, g4]
     p24 = tbar2.vector + g4.vector
     s24 = hp.minkowski(p24)
@@ -280,8 +309,8 @@ def tthqqg(t1, tbar2, h3, q4, qbar5, g6, hcase):
     hat5, hat6 = hp.onShell(qbar5, g6, P, hcase, side='left')
     hatp16 = hp.massive((t1.vector + hat6.vector))
     negp16 = hp.massive((-t1.vector - hat6.vector))
-    d1 = (ttg(t1, hatp16, hat6, hcase[2], ref=qbar5)
-          @ hp.epsLow @ tthqq(negp16, tbar2, h3, q4, hat5, hcase[:2])) / (s16 - t1.mass**2)
+    d1 = (ttg(t1, negp16, hat6, hcase[2], ref=qbar5)
+          @ hp.epsLow @ tthqq(hatp16, tbar2, h3, q4, hat5, hcase[:2])) / (s16 - t1.mass**2)
 
     P = [tbar2, q4, qbar5]
     p245 = tbar2.vector + q4.vector + qbar5.vector
@@ -313,16 +342,16 @@ def tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase):
     hat6, hat7 = hp.onShell(g6, g7, P, hcase, side='left')
     hatp17 = hp.massive((t1.vector + hat7.vector))
     negp17 = hp.massive((-t1.vector - hat7.vector))
-    d1 = (ttg(t1, hatp17, hat7, hcase[3], ref=g6)
-          @ hp.epsLow @ tthggg(negp17, tbar2, h3, g4, g5, hat6, hcase[:3])) / (s17 - t1.mass**2)
+    d1 = (ttg(t1, negp17, hat7, hcase[3], ref=g6)
+          @ hp.epsLow @ tthggg(hatp17, tbar2, h3, g4, g5, hat6, hcase[:3])) / (s17 - t1.mass**2)
 
     P = [tbar2, g4, g5, g6]
     p2456 = tbar2.vector + g4.vector + g5.vector + g6.vector
     s2456 = hp.minkowski(p2456)
-    hat6, hat7 = hp.onShell(g6 ,g7, P, hcase, side='right')
+    hat6, hat7 = hp.onShell(g6, g7, P, hcase, side='right')
     hatp2456 = hp.massive((tbar2.vector + g4.vector + g5.vector + hat6.vector))
     negp2456 = hp.massive((-tbar2.vector - g4.vector - g5.vector - hat6.vector))
-    d2 = (tthg(t1, hatp2456, h3, g7, hcase[3], g6)
+    d2 = (tthg(t1, hatp2456, h3, hat7, hcase[3], g6)
           @ hp.epsLow @ ttggg(negp2456, tbar2, g4, g5, hat6, hcase[:3])) / (s2456 - t1.mass**2)
 
     P = [g4, g5, g6]
@@ -331,10 +360,10 @@ def tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase):
     hat6, hat7 = hp.onShell(g6, g7, P, hcase, side='right')
     hatp456 = hp.massless((g4.vector + g5.vector + hat6.vector))
     negp456 = hp.massless((-g4.vector - g5.vector - hat6.vector))
-    d3a = (tthgg(t1, tbar2, h3, negp456, hat7, ['+'] + list(hcase[3]))
-           * gggg(hatp456, g4, g5, hat6, ['-'] + list(hcase[:3]))) / s456
-    d3b = (tthgg(t1, tbar2, h3, negp456, hat7, ['-'] + list(hcase[3]))
-           * gggg(hatp456, g4, g5, hat6, ['+'] + list(hcase[:3]))) / s456
+    d3a = (tthgg(t1, tbar2, h3, hatp456, hat7, ['+'] + list(hcase[3]))
+           * gggg(negp456, g4, g5, hat6, ['-'] + list(hcase[:3]))) / s456
+    d3b = (tthgg(t1, tbar2, h3, hatp456, hat7, ['-'] + list(hcase[3]))
+           * gggg(negp456, g4, g5, hat6, ['+'] + list(hcase[:3]))) / s456
 
     P = [g5, g6]
     p56 = g5.vector + g6.vector
@@ -344,10 +373,10 @@ def tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase):
     negp56 = hp.massless((-g5.vector - hat6.vector))
     hcase4p7a = list(hcase[0]) + ['+'] + list(hcase[3])
     hcase4p7b = list(hcase[0]) + ['-'] + list(hcase[3])
-    d4a = (tthggg(t1, tbar2, h3, g4, negp56, hat7, hcase4p7a)
-           * ggg(hatp56, g5, g6, ['-'] + list(hcase[1:3]))) / s56
-    d4b = (tthggg(t1, tbar2, h3, g4, negp56, hat7, hcase4p7b)
-           * ggg(hatp56, g5, g6, ['+'] + list(hcase[1:3]))) / s56
+    d4a = (tthggg(t1, tbar2, h3, g4, hatp56, hat7, hcase4p7a)
+           * ggg(negp56, g5, hat6, ['-'] + list(hcase[1:3]))) / s56
+    d4b = (tthggg(t1, tbar2, h3, g4, hatp56, hat7, hcase4p7b)
+           * ggg(negp56, g5, hat6, ['+'] + list(hcase[1:3]))) / s56
     
     amp = d1 + d2 + d3a + d3b + d4a + d4b
     return amp
@@ -368,7 +397,7 @@ def tthqqgg(t1, tbar2, h3, q4, qbar5, g6, g7, hcase):
     hat6, hat7 = hp.onShell(g6, g7, P, hcase, side='right')
     hatp2456 = hp.massive((tbar2.vector + q4.vector + qbar5.vector + hat6.vector))
     negp2456 = hp.massive((-tbar2.vector - q4.vector - qbar5.vector - hat6.vector))
-    d2 = (tthg(t1, hatp2456, h3, g7, hcase[3], g6)
+    d2 = (tthg(t1, hatp2456, h3, hat7, hcase[3], g6)
           @ hp.epsLow @ ttqqg(negp2456, tbar2, q4, qbar5, hat6, hcase[:3])) / (s2456 - t1.mass**2)
 
     P = [q4, qbar5, g6]
@@ -391,9 +420,9 @@ def tthqqgg(t1, tbar2, h3, q4, qbar5, g6, g7, hcase):
     hcase4p7a = list(hcase[0]) + ['+'] + list(hcase[3])
     hcase4p7b = list(hcase[0]) + ['-'] + list(hcase[3])
     d4a = (tthggg(t1, tbar2, h3, q4, hatp56, hat7, hcase4p7a)
-           * gqq(g6, negp56, qbar5, ['-'] + list(hcase[1:3]))) / s56
+           * gqq(hat6, negp56, qbar5, ['-'] + list(hcase[1:3]))) / s56
     d4b = (tthggg(t1, tbar2, h3, q4, hatp56, hat7, hcase4p7b)
-           * gqq(g6, negp56, qbar5, ['+'] + list(hcase[1:3]))) / s56
+           * gqq(hat6, negp56, qbar5, ['+'] + list(hcase[1:3]))) / s56
     amp = d1 + d2 + d3a + d3b + d4a + d4b
     return amp
 

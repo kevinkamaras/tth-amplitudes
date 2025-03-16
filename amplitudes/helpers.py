@@ -17,22 +17,26 @@ class massless:
         p1 = p[1]
         p2 = p[2]
         p3 = p[3]
-        m = np.emath.sqrt(np.vdot(p0,p0) - np.vdot(p1,p1) - np.vdot(p2,p2) - np.vdot(p3,p3))
-        if np.real(m) >= 1:
-            raise ValueError(f'momentum is not massless (m = {m})')
+        m = np.emath.sqrt(p0**2 - p1**2 - p2**2 - p3**2)
+        if abs(m) >= 1e-3:
+            raise ValueError(f'momentum is not massless (m = {abs(m)})')
         pp = p0 + p3
         pm = p0 - p3
         pt = p1 + 1j*p2
         pb = p1 - 1j*p2
         theta = np.heaviside(-np.real(p0), 0)
-        if pp <= 1e-5:
-            raise ValueError('pp = 0')
-        else:
+        if abs(pp) >= 1e-10:
             self.aket = ( 1j)**theta * np.array([[-pb / np.emath.sqrt(pp)], [np.emath.sqrt(pp)]])
             self.sbra = (-1j)**theta * np.array([[-pt / np.emath.sqrt(pp), np.emath.sqrt(pp)]])
-            self.abra = np.matmul(epsHigh, self.aket).T
-            self.sket = np.matmul(self.sbra, epsHigh.T).T
-            self.vector = np.array([p0, p1, p2, p3])
+        elif abs(pm) >= 1e-10:
+            self.aket = ( 1j)**theta * np.array([[- np.emath.sqrt(pm)], [pt / np.emath.sqrt(pm)]])
+            self.sbra = (-1j)**theta * np.array([[- np.emath.sqrt(pm), pb / np.emath.sqrt(pm)]])
+        else:
+            self.aket = 1 / np.emath.sqrt(2 * p1) * np.array([[- pb], [pt]])
+            self.sbra = 1 / np.emath.sqrt(2 * p1) * np.array([[- pt, pb]])
+        self.abra = np.matmul(epsHigh, self.aket).T
+        self.sket = np.matmul(self.sbra, epsHigh.T).T
+        self.vector = np.array([p0, p1, p2, p3])
 
     def momentum(self):
         return self.aket @ self.sbra
@@ -40,7 +44,6 @@ class massless:
     def sketabra(self):
         return self.sket @ self.abra
         
-
 class massive:
     '''spinors for a given massive momentum'''
     def __init__(self, p):
@@ -49,27 +52,79 @@ class massive:
         p2 = p[2]
         p3 = p[3]
         E = p0
-        P = np.sign(E) * np.emath.sqrt(p1**2 + p2**2 + p3**2)
+        if np.real(E) > -1e-5 or (abs(np.real(E)) <= 1e-5 and np.imag(E) >= -1e-5):
+            signE = 1
+        elif np.real(E) < -1e-5 or (abs(np.real(E)) <= 1e5 and np.imag(E) < -1e-5):
+            signE = -1
+        P = signE * np.emath.sqrt(p1**2 + p2**2 + p3**2)
         self.mass = np.emath.sqrt(E**2 - P**2)
         pp = P + p3
         pm = P - p3
         pt = p1 + 1j*p2
         pb = p1 - 1j*p2
         theta = np.heaviside(-np.real(E), 0)
-        if pp <= 1e-5:
-            raise ValueError('pp = 0')
+        thetap0 = np.heaviside(-np.real(p0), 0)
+        if np.array([abs(p1) <= 1e-10, abs(p2) <= 1e-10, abs(p3) <= 1e-10]).all():
+            param = 6
+        elif abs(P) <= 1e-5:
+            if abs(p3) >= 1e-5:
+                param = 3
+            elif abs(pt) <= 1e-5:
+                param = 4
+            else:
+                param = 5
+        elif abs(pp) <= 1e-5:
+            param = 2
         else:
-            I1 =  np.emath.sqrt((E - P) / 2 / P) * np.array([[np.emath.sqrt(pp)], [ pt / np.emath.sqrt(pp)]])
-            I2 =  np.emath.sqrt((E + P) / 2 / P) * np.array([[-pb / np.emath.sqrt(pp)], [np.emath.sqrt(pp)]])
-            J1 =  np.emath.sqrt((E + P) / 2 / P) * np.array([[-pt / np.emath.sqrt(pp), np.emath.sqrt(pp)]])
-            J2 = -np.emath.sqrt((E - P) / 2 / P) * np.array([[np.emath.sqrt(pp),  pb / np.emath.sqrt(pp)]])
-            self.aket = ( 1j)**theta * np.hstack([I1, I2])
-            self.sbra = (-1j)**theta * np.vstack([J1, J2])
-            self.abra = np.matmul(epsHigh, self.aket  ).T
-            self.sket = np.matmul(self.sbra, epsHigh.T).T
-            self.aksb = p0 * sig0 - p1 * sig1 - p2 * sig2 - p3 * sig3
-            self.skab = p0 * sig0 + p1 * sig1 + p2 * sig2 + p3 * sig3
-            self.vector = np.array([p0, p1, p2, p3])
+            param = 1   
+        match param:
+            case 1:
+                I1 =  np.emath.sqrt((E - P) / 2 / P) * np.array([[np.emath.sqrt(pp)], [pt / np.emath.sqrt(pp)]])
+                I2 =  np.emath.sqrt((E + P) / 2 / P) * np.array([[-pb / np.emath.sqrt(pp)], [np.emath.sqrt(pp)]])
+                J1 =  np.emath.sqrt((E + P) / 2 / P) * np.array([[-pt / np.emath.sqrt(pp), np.emath.sqrt(pp)]])
+                J2 = -np.emath.sqrt((E - P) / 2 / P) * np.array([[np.emath.sqrt(pp),  pb / np.emath.sqrt(pp)]])
+                self.aket = ( 1j)**theta * np.hstack([I1, I2])
+                self.sbra = (-1j)**theta * np.vstack([J1, J2])
+            case 2:
+                I1 =  np.emath.sqrt((E - P) / 2 / P) * np.array([[pb / np.emath.sqrt(pm)], [np.emath.sqrt(pm)]])
+                I2 =  np.emath.sqrt((E + P) / 2 / P) * np.array([[-np.emath.sqrt(pm)], [pt / np.emath.sqrt(pm)]])
+                J1 =  np.emath.sqrt((E + P) / 2 / P) * np.array([[-np.emath.sqrt(pm), pt / np.emath.sqrt(pm)]])
+                J2 = -np.emath.sqrt((E - P) / 2 / P) * np.array([[pt / np.emath.sqrt(pm),  np.emath.sqrt(pm)]])
+                self.aket = ( 1j)**theta * np.hstack([I1, I2])
+                self.sbra = (-1j)**theta * np.vstack([J1, J2])
+            case 3:
+                I1 =  p0 / np.emath.sqrt(p0 - pp) * np.array([[0], [-np.emath.sqrt(pt / pb)]])
+                I2 =  np.emath.sqrt(pb) * np.array([[np.emath.sqrt((p0 - pp) / pt)], [-np.emath.sqrt(pt / (p0 - pp))]])
+                J1 =  np.emath.sqrt(pt) * np.array([[np.emath.sqrt((p0 - pp) / pb), -np.emath.sqrt(pb / (p0 - pp))]])
+                J2 = -p0 / np.emath.sqrt(p0 - pp) * np.array([[0, -np.emath.sqrt(pb / pt)]])
+                self.aket = ( 1j)**thetap0 * np.hstack([I1, I2])
+                self.sbra = (-1j)**thetap0 * np.vstack([J1, J2])
+            case 4:
+                I1 =  1 / np.emath.sqrt(2 * p1) * np.array([[-p0], [p0]])
+                I2 =  1 / np.emath.sqrt(2 * p1) * np.array([[-pb + p0], [pt - p0]])
+                J1 =  1 / np.emath.sqrt(2 * p1) * np.array([[-pt - p0, pb - p0]])
+                J2 = -1 / np.emath.sqrt(2 * p1) * np.array([[2*pt - p0, 2 * pb - p0]])
+                self.aket = ( 1j)**thetap0 * np.hstack([I1, I2])
+                self.sbra = (-1j)**thetap0 * np.vstack([J1, J2])
+            case 5:
+                I1 =  1 / np.emath.sqrt(2 * p1) * np.array([[p0], [-p0]])
+                I2 =  1 / np.emath.sqrt(2 * p1) * np.array([[-pb + p0], [pt - p0]])
+                J1 =  1 / np.emath.sqrt(2 * p1) * np.array([[-pt + p0, pb +  p0]])
+                J2 = -1 / np.emath.sqrt(2 * p1) * np.array([[2*pt - p0, 2 * pb - p0]])
+                self.aket = ( 1j)**thetap0 * np.hstack([I1, I2])
+                self.sbra = (-1j)**thetap0 * np.vstack([J1, J2])
+            case 6:
+                I1 =  np.array([[np.emath.sqrt(p0)], [0]])
+                I2 =  np.array([[0], [np.emath.sqrt(p0)]])
+                J1 =  np.array([[0, np.emath.sqrt(p0)]])
+                J2 = -np.array([[np.emath.sqrt(p0), 0]])
+                self.aket = ( 1j)**thetap0 * np.hstack([I1, I2])
+                self.sbra = (-1j)**thetap0 * np.vstack([J1, J2])
+        self.abra = np.matmul(epsHigh, self.aket  ).T
+        self.sket = np.matmul(self.sbra, epsHigh.T).T
+        self.aksb = p0 * sig0 - p1 * sig1 - p2 * sig2 - p3 * sig3
+        self.skab = p0 * sig0 + p1 * sig1 + p2 * sig2 + p3 * sig3
+        self.vector = np.array([p0, p1, p2, p3])
         
     def momentum(self):
         return self.aksb
@@ -108,10 +163,24 @@ def onShell(pi, pj, P, hcase, side):
                 z = - (pj.abra @ P[0].momentum() @ pj.sket) / (pi.abra @ P[0].momentum() @ pj.sket)
             elif len(P) == 2:
                 z = (pi.abra @ P[0].momentum() @ pi.sket) / (pi.abra @ P[0].momentum() @ pj.sket)
+            elif len(P) == 3:
+                momenta = P[0].momentum() + P[1].momentum()
+                z = ((  pi.abra @ momenta @ pi.sket
+                    + P[-2].abra @ P[0].momentum() @ P[-2].sket)
+                    / (pi.abra @ momenta @ pj.sket))
             else:
-                z = ((  pi.abra @ np.sum([p.momentum() for p in P[:-1]], axis=0) @ pi.sket
-                    + P[-2].abra @ np.sum([p.momentum() for p in P[:-2]], axis=0) @ P[-2].sket)
-                    / pi.abra @ np.sum([p.momentum() for p in P[:-1]], axis=0) @ pj.sket)
+                momenta1 = np.array([p.momentum() for p in P[:-1]])
+                momenta2 = np.array([p.momentum() for p in P[:-2]])
+                sum1 = np.array([[0j, 0j], [0j, 0j]])
+                sum2 = np.array([[0j, 0j], [0j, 0j]])
+                for m in momenta1:
+                    sum1 += m
+                for m in momenta2:
+                    sum2 += m
+                z = ((  pi.abra @ sum1 @ pi.sket
+                    + P[-2].abra @ sum2 @ P[-2].sket
+                    + P[-3].abra @ P[0].momentum() @ P[-3].sket)
+                    / (pi.abra @ sum1 @ pj.sket))
             z = z[0, 0]
             hati.sket = pi.sket - z * pj.sket
             hati.sbra = pi.sbra - z * pj.sbra
@@ -124,10 +193,18 @@ def onShell(pi, pj, P, hcase, side):
                 z = (pj.abra @ P[0].momentum() @ pj.sket) / (pj.abra @ P[0].momentum() @ pi.sket)
             elif len(P) == 2:
                 z = - (pi.abra @ P[0].momentum() @ pi.sket) / (pj.abra @ P[0].momentum() @ pi.sket)
+            elif len(P) == 3:
+                momenta = P[0].momentum() + P[1].momentum()
+                z = - ((  pi.abra @ momenta @ pi.sket
+                    + P[-2].abra @ P[0].momentum() @ P[-2].sket)
+                    / (pj.abra @ momenta @ pi.sket))
             else:
-                z = - ((  pi.abra @ np.sum([p.momentum() for p in P[:-1]], axis=0) @ pi.sket
-                       + P[-2].abra @ np.sum([p.momentum() for p in P[:-2]], axis=0) @ P[-2].sket)
-                       / pj.abra @ np.sum([p.momentum() for p in P[:-1]], axis=0) @ pi.sket)
+                momenta1 = P[0].momentum() + P[1].momentum() + P[2].momentum()
+                momenta2 = P[0].momentum() + P[1].momentum()
+                z = - ((  pi.abra @ momenta1 @ pi.sket
+                    + P[-2].abra @ momenta2 @ P[-2].sket
+                    + P[-3].abra @ P[0].momentum() @ P[-3].sket)
+                    / (pj.abra @ momenta1 @ pi.sket))
             z = z[0, 0]
             hati.aket = pi.aket + z * pj.aket
             hati.abra = pi.abra + z * pj.abra
