@@ -37,10 +37,34 @@ def ttqqg_test(momenta):
     else:
         print('----------------------------------------------')
         print('test for ttqqg failed!')
+        print(f'amplitude from my ttqqg function:\n{ttqqg}\n')
+        print(f'amplitude from explicit expression in Campbell2023:\n{d1 + d2}\n')
         print('----------------------------------------------\n')
     return
 
 def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
+
+    v = 0.9
+    phi = 1.5
+    theta = 0.6
+
+    bx = np.sin(theta) * np.cos(phi)
+    by = np.sin(theta) * np.sin(phi)
+    bz = np.cos(theta)
+
+    beta = v * np.array([bx, by, bz])
+
+    gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
+    bx = beta[0]
+    by = beta[1]
+    bz = beta[2]
+    G = gamma**2 / (1 + gamma)
+
+    L = np.array([[       gamma,  - gamma * bx,  - gamma * by,  - gamma * bz],
+                  [- gamma * bx, 1 + G * bx**2,   G * bx * by,   G * bx * bz],
+                  [- gamma * by,   G * bx * by, 1 + G * by**2,   G * by * bz],
+                  [- gamma * bz,   G * bx * bz,   G * by * bz, 1 + G * bz**2]])
+    
     mtop = 171
     Etop = np.sqrt(ptop**2 + mtop**2)
     ptopx = ptop * np.sin(thetatop) * np.cos(phitop)
@@ -52,10 +76,21 @@ def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
     pgluy = Eglu * np.sin(thetaglu) * np.sin(phiglu)
     pgluz = Eglu * np.cos(thetaglu)
 
-    t1    = hp.massive([Etop, ptopx, ptopy, ptopz])
-    tbar2 = hp.massive([Etop, -ptopx, -ptopy, -ptopz])
-    g3    = hp.massless([-Eglu, pglux, pgluy, pgluz])
-    g4    = hp.massless([-Eglu, -pglux, -pgluy, -pgluz])
+    t1    = [Etop, ptopx, ptopy, ptopz]
+    tbar2 = [Etop, -ptopx, -ptopy, -ptopz]
+    g3    = [-Eglu, pglux, pgluy, pgluz]
+    g4    = [-Eglu, -pglux, -pgluy, -pgluz]
+
+    t1_b    = L @ t1
+    tbar2_b = L @ tbar2
+    g3_b    = L @ g3
+    g4_b    = L @ g4
+
+    t1 = hp.massive(t1)
+    tbar2 = hp.massive(tbar2)
+    g3 = hp.massless(g3)
+    g4 = hp.massless(g4)
+
     hcases = [['+', '+'],
               ['-', '-'],
               ['+', '-'],
@@ -108,7 +143,6 @@ def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
         print('----------------------------------------------\n')
     return
 
-
 def tthg_test(phitop, thetatop, ptop, phiglu, thetaglu, hcase):
     mtop = 171
     mhig = 125
@@ -152,5 +186,304 @@ def tthg_test(phitop, thetatop, ptop, phiglu, thetaglu, hcase):
     else:
         print('----------------------------------------------')
         print('test for tthg failed!')
+        print('----------------------------------------------\n')
+    return
+
+def boost_ttgg(beta):
+    gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
+    bx = beta[0]
+    by = beta[1]
+    bz = beta[2]
+    G = gamma**2 / (1 + gamma)
+
+    L = np.array([[       gamma,  - gamma * bx,  - gamma * by,  - gamma * bz],
+                  [- gamma * bx, 1 + G * bx**2,   G * bx * by,   G * bx * bz],
+                  [- gamma * by,   G * bx * by, 1 + G * by**2,   G * by * bz],
+                  [- gamma * bz,   G * bx * bz,   G * by * bz, 1 + G * bz**2]])
+    
+    mtop = 171
+    phitop = 1.27
+    thetatop = 0.78
+    ptop = 200
+    phiglu = 0.97
+    thetaglu = 2.5
+    Etop = np.sqrt(ptop**2 + mtop**2)
+    ptopx = ptop * np.sin(thetatop) * np.cos(phitop)
+    ptopy = ptop * np.sin(thetatop) * np.sin(phitop)
+    ptopz = ptop * np.cos(thetatop)
+
+    Eglu = Etop
+    pglux = Eglu * np.sin(thetaglu) * np.cos(phiglu)
+    pgluy = Eglu * np.sin(thetaglu) * np.sin(phiglu)
+    pgluz = Eglu * np.cos(thetaglu)
+
+    t1    = np.array([Etop, ptopx, ptopy, ptopz])
+    tbar2 = np.array([Etop, -ptopx, -ptopy, -ptopz])
+    g3    = np.array([-Eglu, pglux, pgluy, pgluz])
+    g4    = np.array([-Eglu, -pglux, -pgluy, -pgluz])
+    hcase = ['+', '-']
+
+    metric = np.array([[ 1,  0,  0,  0],
+                       [ 0, -1,  0,  0],
+                       [ 0,  0, -1,  0],
+                       [ 0,  0,  0, -1]])
+
+    t1_b    = L @ t1
+    tbar2_b = L @ tbar2
+    g3_b    = L @ g3
+    g4_b    = L @ g4
+    
+    t1    = hp.massive(t1)
+    tbar2 = hp.massive(tbar2)
+    g3    = hp.massless(g3)
+    g4    = hp.massless(g4)
+
+    t1_b    = hp.massive(t1_b)
+    tbar2_b = hp.massive(tbar2_b)
+    g3_b    = hp.massless(g3_b)
+    g4_b    = hp.massless(g4_b)
+
+    ttgg = core.ttgg(t1, tbar2, g3, g4, hcase)
+    ttgg_b = core.ttgg(t1_b, tbar2_b, g3_b, g4_b, hcase)
+
+    spinSum = np.sum(abs(ttgg)**2)
+    spinSum_b = np.sum(abs(ttgg_b)**2)
+
+    diff = abs(spinSum) - abs(spinSum_b)
+
+    print('\nTEST FOR ttgg BOOST:')
+    print('----------------------------------------------')
+    if (abs(diff) <= 1e-5).all():
+        print('test for ttgg boost passed!\n')
+        print(f'unboosted spin sum:\n{spinSum}\n')
+        print(f'boosted spin sum:\n{spinSum}\n')
+        print(f'|diff| =\n{abs(diff)}')
+        print('the two amplitudes are equal')
+        print('----------------------------------------------\n')
+    else:
+        print('test for ttgg boost failed!\n')
+        print(f'unboosted spin sum:\n{spinSum}\n')
+        print(f'boosted spin sum:\n{spinSum_b}\n')
+        print('----------------------------------------------\n')
+    return
+
+def boost_tthg(beta):
+    gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
+    bx = beta[0]
+    by = beta[1]
+    bz = beta[2]
+    G = gamma**2 / (1 + gamma)
+
+    L = np.array([[       gamma,  - gamma * bx,  - gamma * by,  - gamma * bz],
+                  [- gamma * bx, 1 + G * bx**2,   G * bx * by,   G * bx * bz],
+                  [- gamma * by,   G * bx * by, 1 + G * by**2,   G * by * bz],
+                  [- gamma * bz,   G * bx * bz,   G * by * bz, 1 + G * bz**2]])
+    
+    mtop = 171
+    mhig = 125
+
+    phitop = 1.27
+    thetatop = 0.78
+    ptop = 200
+    phiglu = 0.97
+    thetaglu = 2.5
+    hcases = ['+', '-']
+
+    Etop = np.sqrt(ptop**2 + mtop**2)
+    ptopx = ptop * np.sin(thetatop) * np.cos(phitop)
+    ptopy = ptop * np.sin(thetatop) * np.sin(phitop)
+    ptopz = ptop * np.cos(thetatop)
+
+    Eglu = Etop - (mhig**2 / (4 * Etop))
+    pglux = Eglu * np.sin(thetaglu) * np.cos(phiglu)
+    pgluy = Eglu * np.sin(thetaglu) * np.sin(phiglu)
+    pgluz = Eglu * np.cos(thetaglu)
+
+    Ehig = np.sqrt(Eglu**2 + mhig**2)
+    t1    = [Etop, ptopx, ptopy, ptopz]
+    tbar2 = [Etop, -ptopx, -ptopy, -ptopz]
+    h3    = [-Ehig, pglux, pgluy, pgluz]
+    g4    = [-Eglu, -pglux, -pgluy, -pgluz]
+    ref  = [1, 1, 0, 0]
+
+    metric = np.array([[ 1,  0,  0,  0],
+                       [ 0, -1,  0,  0],
+                       [ 0,  0, -1,  0],
+                       [ 0,  0,  0, -1]])
+
+    t1_b    = L @ t1
+    tbar2_b = L @ tbar2
+    h3_b    = L @ h3
+    g4_b    = L @ g4
+
+    tthgs = np.array([amps.tthg(t1, tbar2, h3, g4, hcase, ref) for hcase in hcases])
+    tthgs_b = np.array([amps.tthg(t1_b, tbar2_b, h3_b, g4_b, hcase, ref) for hcase in hcases])
+
+    spinSum = np.sum(abs(tthgs)**2)
+    spinSum_b = np.sum(abs(tthgs_b)**2)
+
+    diff = abs(spinSum) - abs(spinSum_b)
+
+    print('\nTEST FOR tthg BOOST:')
+    print('----------------------------------------------')
+    if (abs(diff) <= 1e-5).all():
+        print('test for tthg boost passed!\n')
+        print(f'unboosted spin sum:\n{spinSum}\n')
+        print(f'boosted spin sum:\n{spinSum}\n')
+        print(f'|diff| =\n{abs(diff)}')
+        print('the two amplitudes are equal')
+        print('----------------------------------------------\n')
+    else:
+        print('test for tthg boost failed!\n')
+        print(f'unboosted amplitude:\n{spinSum}\n')
+        print(f'boosted amplitude:\n{spinSum_b}\n')
+        print('----------------------------------------------\n')
+    return
+
+def boost_tthgg(beta):
+    gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
+    bx = beta[0]
+    by = beta[1]
+    bz = beta[2]
+    G = gamma**2 / (1 + gamma)
+
+    L = np.array([[       gamma,  - gamma * bx,  - gamma * by,  - gamma * bz],
+                  [- gamma * bx, 1 + G * bx**2,   G * bx * by,   G * bx * bz],
+                  [- gamma * by,   G * bx * by, 1 + G * by**2,   G * by * bz],
+                  [- gamma * bz,   G * bx * bz,   G * by * bz, 1 + G * bz**2]])
+    
+    mTop = 1
+    mHiggs = 125
+
+    phiTop = 1.02
+    thetaTop = 0.87
+    pTop = 200
+    phiGlu1 = 1.2
+    thetaGlu1 = 0.9
+
+    Etop = np.sqrt(mTop**2 + pTop**2)
+    ptopx = pTop * np.sin(thetaTop) * np.cos(phiTop)
+    ptopy = pTop * np.sin(thetaTop) * np.sin(phiTop)
+    ptopz = pTop * np.cos(thetaTop)
+
+    Eglu = (2 * Etop + mHiggs) / 2
+    pglux1 = Eglu * np.sin(thetaGlu1) * np.cos(phiGlu1)
+    pgluy1 = Eglu * np.sin(thetaGlu1) * np.sin(phiGlu1)
+    pgluz1 = Eglu * np.cos(thetaGlu1)
+
+    t1    = np.array([Etop, ptopx, ptopy, ptopz])
+    tbar2 = np.array([Etop, -ptopx, -ptopy, -ptopz])
+    h3    = np.array([mHiggs, 0, 0, 0])
+    g4    = np.array([-Eglu, pglux1, pgluy1, pgluz1])
+    g5    = np.array([-Eglu, -pglux1, -pgluy1, -pgluz1])
+
+    t1_b    = L @ t1
+    tbar2_b = L @ tbar2
+    h3_b    = L @ h3
+    g4_b    = L @ g4
+    g5_b    = L @ g5 
+
+    hcase = ['-', '-']
+    tthgg = amps.tthgg(t1, tbar2, h3, g4, g5, hcase)
+    tthgg_b = amps.tthgg(t1_b, tbar2_b, h3_b, g4_b, g5_b, hcase)
+
+    diff = np.sum(abs(tthgg)**2) - np.sum(abs(tthgg_b)**2)
+
+    print('\nTEST FOR tthgg BOOST:')
+    print('----------------------------------------------')
+    if (abs(diff) <= 1).all():
+        print('test for tthgg boost passed!\n')
+        print(f'unboosted spin sum:\n{np.sum(abs(tthgg)**2)}\n')
+        print(f'boosted spin sum:\n{np.sum(abs(tthgg_b)**2)}\n')
+        print(f'|diff| =\n{abs(diff)}')
+        print('the two amplitudes are equal')
+        print('----------------------------------------------\n')
+    else:
+        print('test for tthgg boost failed!\n')
+        print(f'unboosted spin sum:\n{np.sum(abs(tthgg)**2)}\n')
+        print(f'boosted spin sum:\n{np.sum(abs(tthgg_b)**2)}\n')
+        print(f'diff =\n{diff}')
+        print('----------------------------------------------\n')
+    return
+
+def boost_tthgggg(beta):
+    gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
+    bx = beta[0]
+    by = beta[1]
+    bz = beta[2]
+    G = gamma**2 / (1 + gamma)
+
+    L = np.array([[       gamma,  - gamma * bx,  - gamma * by,  - gamma * bz],
+                  [- gamma * bx, 1 + G * bx**2,   G * bx * by,   G * bx * bz],
+                  [- gamma * by,   G * bx * by, 1 + G * by**2,   G * by * bz],
+                  [- gamma * bz,   G * bx * bz,   G * by * bz, 1 + G * bz**2]])
+    
+    mTop = 171
+    mHiggs = 125
+
+    phiTop = 1.02
+    thetaTop = 0.87
+    pTop = 200
+    phiGlu1 = 1.2
+    thetaGlu1 = 0.9
+    phiGlu2 = 0.31
+    thetaGlu2 = 1
+
+    Etop = np.sqrt(mTop**2 + pTop**2)
+    ptopx = pTop * np.sin(thetaTop) * np.cos(phiTop)
+    ptopy = pTop * np.sin(thetaTop) * np.sin(phiTop)
+    ptopz = pTop * np.cos(thetaTop)
+
+    Eglu = (2 * Etop + mHiggs) / 4
+    pglux1 = Eglu * np.sin(thetaGlu1) * np.cos(phiGlu1)
+    pgluy1 = Eglu * np.sin(thetaGlu1) * np.sin(phiGlu1)
+    pgluz1 = Eglu * np.cos(thetaGlu1)
+
+    pglux2 = Eglu * np.sin(thetaGlu2) * np.cos(phiGlu2)
+    pgluy2 = Eglu * np.sin(thetaGlu2) * np.sin(phiGlu2)
+    pgluz2 = Eglu * np.cos(thetaGlu2)
+
+    t1    = np.array([Etop, ptopx, ptopy, ptopz])
+    tbar2 = np.array([Etop, -ptopx, -ptopy, -ptopz])
+    h3    = np.array([mHiggs, 0, 0, 0])
+    g4    = np.array([-Eglu, pglux1, pgluy1, pgluz1])
+    g5    = np.array([-Eglu, pglux2, pgluy2, pgluz2])
+    g6    = np.array([-Eglu, -pglux1, -pgluy1, -pgluz1])
+    g7    = np.array([-Eglu, -pglux2, -pgluy2, -pgluz2])
+
+    metric = np.array([[ 1,  0,  0,  0],
+                       [ 0, -1,  0,  0],
+                       [ 0,  0, -1,  0],
+                       [ 0,  0,  0, -1]])
+    
+
+    t1_b    = L @ t1
+    tbar2_b = L @ tbar2
+    h3_b    = L @ h3
+    g4_b    = L @ g4
+    g5_b    = L @ g5
+    g6_b    = L @ g6
+    g7_b    = L @ g7
+    
+
+    hcase = ['-', '+', '-', '+']
+    tthgggg = amps.tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase)
+    tthgggg_b = amps.tthgggg(t1_b, tbar2_b, h3_b, g4_b, g5_b, g6_b, g7_b, hcase)
+
+    diff = np.sum(abs(tthgggg)**2) - np.sum(abs(tthgggg_b)**2)
+
+    print('\nTEST FOR tthgggg BOOST:')
+    print('----------------------------------------------')
+    if (abs(diff) <= 1).all():
+        print('test for tthgggg boost passed!\n')
+        print(f'unboosted spin sum:\n{tthgggg}\n')
+        print(f'boosted spin sum:\n{tthgggg_b}\n')
+        print(f'|diff| =\n{abs(diff)}')
+        print('the two amplitudes are equal')
+        print('----------------------------------------------\n')
+    else:
+        print('test for tthgggg boost failed!\n')
+        print(f'unboosted spin sum:\n{np.sum(abs(tthgggg)**2)}\n')
+        print(f'boosted spin sum:\n{np.sum(abs(tthgggg_b)**2)}\n')
         print('----------------------------------------------\n')
     return

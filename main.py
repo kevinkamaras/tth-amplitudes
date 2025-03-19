@@ -60,9 +60,9 @@ g6    = np.array([-Eglu, -pglux1, -pgluy1, -pgluz1])
 g7    = np.array([-Eglu, -pglux2, -pgluy2, -pgluz2])
 
 # Evaluate color-ordered subamplitude
-tthgggg = amps.tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase)
+# tthgggg = amps.tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase)
 
-print(f'tthgggg for {hcase[0]}, {hcase[1]}, {hcase[2]}, {hcase[3]} helicities =\n{tthgggg}\n')
+# print(f'tthgggg for {hcase[0]}, {hcase[1]}, {hcase[2]}, {hcase[3]} helicities =\n{tthgggg}\n')
 
 
 # Some tests that I ran to check my amplitudes:
@@ -79,7 +79,7 @@ g5    = [-17.5, -17.5,  0,  0]
 momenta = [t1, tbar2, q3, qbar4, g5]
 
 # uncomment to run test:
-# tests.ttqqg_test(momenta)
+tests.ttqqg_test(momenta)
 
 # ---------------------------------------------------------------
 # ttgg test: Here I compare the ttgg amplitude squared summed over color and spins
@@ -97,7 +97,7 @@ phiGlu = 0.97
 thetaGlu = 2.5
 
 # uncomment to run test:
-# tests.ttgg_test(phiTop, thetaTop, pTop, phiGlu, thetaGlu)
+tests.ttgg_test(phiTop, thetaTop, pTop, phiGlu, thetaGlu)
 
 # ---------------------------------------------------------------
 # tthg test: Here I compare the tthg amplitude for four different reference spinors.
@@ -119,4 +119,68 @@ thetaGlu = 2.5
 hcase = '+'
 
 # uncomment to run test:
-# tests.tthg_test(phiTop, thetaTop, pTop, phiGlu, thetaGlu, hcase)
+tests.tthg_test(phiTop, thetaTop, pTop, phiGlu, thetaGlu, hcase)
+
+# ---------------------------------------------------------------
+# ttgg boost test: 
+
+v = 0.9
+phi = 1.5
+theta = 0.6
+
+bx = np.sin(theta) * np.cos(phi)
+by = np.sin(theta) * np.sin(phi)
+bz = np.cos(theta)
+
+beta = v * np.array([bx, by, bz])
+
+# uncomment to run test:
+tests.boost_ttgg(beta)
+
+# ---------------------------------------------------------------
+# tthg boost test: 
+
+v = 0.9999
+phi = 1.5
+theta = 0.6
+
+bx = np.sin(theta) * np.cos(phi)
+by = np.sin(theta) * np.sin(phi)
+bz = np.cos(theta)
+
+beta = v * np.array([bx, by, bz])
+
+# uncomment to run test:
+tests.boost_tthg(beta)
+
+# ---------------------------------------------------------------
+# tthgg boost test: 
+
+v = 0.999
+phi = 1.5
+theta = 0.6
+
+bx = np.sin(theta) * np.cos(phi)
+by = np.sin(theta) * np.sin(phi)
+bz = np.cos(theta)
+
+beta = v * np.array([bx, by, bz])
+
+# uncomment to run test:
+tests.boost_tthgg(beta)
+
+# ---------------------------------------------------------------
+# tthgggg boost test: 
+
+v = 0.9
+phi = 1.5
+theta = 0.6
+
+bx = np.sin(theta) * np.cos(phi)
+by = np.sin(theta) * np.sin(phi)
+bz = np.cos(theta)
+
+beta = v * np.array([bx, by, bz])
+
+# uncomment to run test:
+tests.boost_tthgggg(beta)

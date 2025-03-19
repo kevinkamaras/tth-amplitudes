@@ -1,5 +1,6 @@
 import amplitudes.helpers as hp
 import numpy as np
+import copy
 
 def ggg(g1, g2, g3, hcase):
     '''from Campbell2023'''
@@ -439,3 +440,4 @@ def tthqqqq(t1, tbar2, h3, q4, qbar5, q6, qbar7, hcase):
            * qqqq(q4, qbar5, hat6, negp456, ['+'] + list(hcase[:-1])) / s456)
     amp = d1a + d1b
     return amp
+    
