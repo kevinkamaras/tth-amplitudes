@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+import scipy.optimize as opt
 
 epsLow  = np.array([[0, -1], [ 1, 0]])
 epsHigh = np.array([[0,  1], [-1, 0]])
@@ -143,7 +144,12 @@ def dot(p, q):
         raise TypeError('please choose two four-vectors')
     return p[0]*q[0] - p[1]*q[1] - p[2]*q[2] - p[3]*q[3]
 
-def boost(momenta, beta):
+def boost(momenta, v, phi, theta):
+    bx = np.sin(theta) * np.cos(phi)
+    by = np.sin(theta) * np.sin(phi)
+    bz = np.cos(theta)
+
+    beta = v * np.array([bx, by, bz])
     gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
     bx = beta[0]
     by = beta[1]
@@ -157,6 +163,77 @@ def boost(momenta, beta):
 
     momenta_b = [L @ p for p in momenta]
     return momenta_b
+
+def tthggMomenta(angles):
+    mTop = 171
+    mHiggs = 125
+    phi1   = angles[0]
+    theta1 = angles[1]
+    phi2   = angles[2]
+    theta2 = angles[3]
+    phi4   = angles[4]
+    theta4 = angles[5]
+    phi5   = angles[6]
+    theta5 = angles[7]
+
+    def F(x):
+        p1 = x[0]
+        p2 = x[1]
+        p4 = x[2]
+        p5 = x[3]
+        F = np.empty(4)
+        F[0] = np.emath.sqrt(p1**2 + mTop**2) + np.emath.sqrt(p2**2 + mTop**2) + p4 + p5 + mHiggs
+        F[1] = (p1 * np.sin(theta1) * np.cos(phi1)
+                + p2 * np.sin(theta2) * np.cos(phi2)
+                + p4 * np.sin(theta4) * np.cos(phi4)
+                + p5 * np.sin(theta5) * np.cos(phi5))
+        F[2] = (p1 * np.sin(theta1) * np.sin(phi1)
+                + p2 * np.sin(theta2) * np.sin(phi2)
+                + p4 * np.sin(theta4) * np.sin(phi4)
+                + p5 * np.sin(theta5) * np.sin(phi5))
+        F[3] = (p1 * np.cos(theta1)
+                + p2 * np.cos(theta2)
+                + p4 * np.cos(theta4)
+                + p5 * np.cos(theta5))
+        return F
+
+    guess = np.array([100, -100, 100, -100])
+    p_opt = opt.newton_krylov(F, guess)
+
+    p1 = p_opt[0]
+    p2 = p_opt[1]
+    p4 = p_opt[2]
+    p5 = p_opt[3]
+
+    p1x = p1 * np.sin(theta1) * np.cos(phi1)
+    p1y = p1 * np.sin(theta1) * np.sin(phi1)
+    p1z = p1 * np.cos(theta1)
+
+    p2x = p2 * np.sin(theta2) * np.cos(phi2)
+    p2y = p2 * np.sin(theta2) * np.sin(phi2)
+    p2z = p2 * np.cos(theta2)
+
+    p4x = p4 * np.sin(theta4) * np.cos(phi4)
+    p4y = p4 * np.sin(theta4) * np.sin(phi4)
+    p4z = p4 * np.cos(theta4)
+
+    p5x = p5 * np.sin(theta5) * np.cos(phi5)
+    p5y = p5 * np.sin(theta5) * np.sin(phi5)
+    p5z = p5 * np.cos(theta5)
+
+    E1 = np.sqrt(p1**2 + mTop**2)
+    E2 = np.sqrt(p2**2 + mTop**2)
+    E4 = p4
+    E5 = p5
+
+    t1    = np.array([E1, p1x, p1y, p1z])
+    tbar2 = np.array([E2, p2x, p2y, p2z])
+    h3    = np.array([mHiggs, 0, 0, 0])
+    g4    = np.array([E4, p4x, p4y, p4z])
+    g5    = np.array([E5, p5x, p5y, p5z])
+
+    momenta = [t1, tbar2, h3, g4, g5]
+    return momenta
 
 def abraket(a, b):
     '''angle braket of two spinors. 0-, 1-, or 2-dimensional output'''

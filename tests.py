@@ -2,7 +2,6 @@ import numpy as np
 import amplitudes.helpers as hp
 import amplitudes.core as core
 import amplitudes.amps as amps
-import scipy.optimize as opt
 
 def ttqqg_test(momenta):
     t1 = hp.massive(momenta[0])
@@ -28,11 +27,10 @@ def ttqqg_test(momenta):
     diff = ttqqg - (d1 + d2)
     print('\nTEST FOR ttqqg:')
     print('----------------------------------------------')
-    if diff.all() <= 1:
+    if (abs(diff) <= 1e-5).all():
         print('test for ttqqg passed!\n')
         print(f'amplitude from my ttqqg function:\n{ttqqg}\n')
         print(f'amplitude from explicit expression in Campbell2023:\n{d1 + d2}\n')
-        # print(f'|diff| =\n{abs(diff)}')
         print('the two amplitudes are equal')
         print('----------------------------------------------\n')
     else:
@@ -44,7 +42,6 @@ def ttqqg_test(momenta):
     return
 
 def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
-
     v = 0.9
     phi = 1.5
     theta = 0.6
@@ -87,10 +84,10 @@ def ttgg_test(phitop, thetatop, ptop, phiglu, thetaglu):
     g3_b    = L @ g3
     g4_b    = L @ g4
 
-    t1 = hp.massive(t1)
-    tbar2 = hp.massive(tbar2)
-    g3 = hp.massless(g3)
-    g4 = hp.massless(g4)
+    t1 = hp.massive(t1_b)
+    tbar2 = hp.massive(tbar2_b)
+    g3 = hp.massless(g3_b)
+    g4 = hp.massless(g4_b)
 
     hcases = [['+', '+'],
               ['-', '-'],
@@ -190,18 +187,7 @@ def tthg_test(phitop, thetatop, ptop, phiglu, thetaglu, hcase):
         print('----------------------------------------------\n')
     return
 
-def boost_ttgg(beta):
-    gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
-    bx = beta[0]
-    by = beta[1]
-    bz = beta[2]
-    G = gamma**2 / (1 + gamma)
-
-    L = np.array([[       gamma,  - gamma * bx,  - gamma * by,  - gamma * bz],
-                  [- gamma * bx, 1 + G * bx**2,   G * bx * by,   G * bx * bz],
-                  [- gamma * by,   G * bx * by, 1 + G * by**2,   G * by * bz],
-                  [- gamma * bz,   G * bx * bz,   G * by * bz, 1 + G * bz**2]])
-    
+def boost_ttgg(v, phi, theta):
     mtop = 171
     phitop = 1.27
     thetatop = 0.78
@@ -222,27 +208,19 @@ def boost_ttgg(beta):
     tbar2 = np.array([Etop, -ptopx, -ptopy, -ptopz])
     g3    = np.array([-Eglu, pglux, pgluy, pgluz])
     g4    = np.array([-Eglu, -pglux, -pgluy, -pgluz])
+    momenta = [t1, tbar2, g3, g4]
+    momenta_b = hp.boost(momenta, v, phi, theta)
     hcase = ['+', '-']
-
-    metric = np.array([[ 1,  0,  0,  0],
-                       [ 0, -1,  0,  0],
-                       [ 0,  0, -1,  0],
-                       [ 0,  0,  0, -1]])
-
-    t1_b    = L @ t1
-    tbar2_b = L @ tbar2
-    g3_b    = L @ g3
-    g4_b    = L @ g4
     
     t1    = hp.massive(t1)
     tbar2 = hp.massive(tbar2)
     g3    = hp.massless(g3)
     g4    = hp.massless(g4)
 
-    t1_b    = hp.massive(t1_b)
-    tbar2_b = hp.massive(tbar2_b)
-    g3_b    = hp.massless(g3_b)
-    g4_b    = hp.massless(g4_b)
+    t1_b    = hp.massive(momenta_b[0])
+    tbar2_b = hp.massive(momenta_b[1])
+    g3_b    = hp.massless(momenta_b[2])
+    g4_b    = hp.massless(momenta_b[3])
 
     ttgg = core.ttgg(t1, tbar2, g3, g4, hcase)
     ttgg_b = core.ttgg(t1_b, tbar2_b, g3_b, g4_b, hcase)
@@ -268,18 +246,7 @@ def boost_ttgg(beta):
         print('----------------------------------------------\n')
     return
 
-def boost_tthg(beta):
-    gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
-    bx = beta[0]
-    by = beta[1]
-    bz = beta[2]
-    G = gamma**2 / (1 + gamma)
-
-    L = np.array([[       gamma,  - gamma * bx,  - gamma * by,  - gamma * bz],
-                  [- gamma * bx, 1 + G * bx**2,   G * bx * by,   G * bx * bz],
-                  [- gamma * by,   G * bx * by, 1 + G * by**2,   G * by * bz],
-                  [- gamma * bz,   G * bx * bz,   G * by * bz, 1 + G * bz**2]])
-    
+def boost_tthg(v, phi, theta):
     mtop = 171
     mhig = 125
 
@@ -301,24 +268,16 @@ def boost_tthg(beta):
     pgluz = Eglu * np.cos(thetaglu)
 
     Ehig = np.sqrt(Eglu**2 + mhig**2)
-    t1    = [Etop, ptopx, ptopy, ptopz]
-    tbar2 = [Etop, -ptopx, -ptopy, -ptopz]
-    h3    = [-Ehig, pglux, pgluy, pgluz]
-    g4    = [-Eglu, -pglux, -pgluy, -pgluz]
+    t1    = np.array([Etop, ptopx, ptopy, ptopz])
+    tbar2 = np.array([Etop, -ptopx, -ptopy, -ptopz])
+    h3    = np.array([-Ehig, pglux, pgluy, pgluz])
+    g4    = np.array([-Eglu, -pglux, -pgluy, -pgluz])
+    momenta = [t1, tbar2, h3, g4]
+    momenta_b = hp.boost(momenta, v, phi, theta)
     ref  = [1, 1, 0, 0]
 
-    metric = np.array([[ 1,  0,  0,  0],
-                       [ 0, -1,  0,  0],
-                       [ 0,  0, -1,  0],
-                       [ 0,  0,  0, -1]])
-
-    t1_b    = L @ t1
-    tbar2_b = L @ tbar2
-    h3_b    = L @ h3
-    g4_b    = L @ g4
-
-    tthgs = np.array([amps.tthg(t1, tbar2, h3, g4, hcase, ref) for hcase in hcases])
-    tthgs_b = np.array([amps.tthg(t1_b, tbar2_b, h3_b, g4_b, hcase, ref) for hcase in hcases])
+    tthgs = np.array([amps.tthg(*momenta, hcase, ref) for hcase in hcases])
+    tthgs_b = np.array([amps.tthg(*momenta_b, hcase, ref) for hcase in hcases])
 
     spinSum = np.sum(abs(tthgs)**2)
     spinSum_b = np.sum(abs(tthgs_b)**2)
@@ -332,7 +291,7 @@ def boost_tthg(beta):
         print(f'unboosted spin sum:\n{spinSum}\n')
         print(f'boosted spin sum:\n{spinSum}\n')
         print(f'|diff| =\n{abs(diff)}')
-        print('the two amplitudes are equal')
+        print('the two spin sums are equal')
         print('----------------------------------------------\n')
     else:
         print('test for tthg boost failed!\n')
@@ -341,10 +300,7 @@ def boost_tthg(beta):
         print('----------------------------------------------\n')
     return
 
-def boost_tthgg(beta):
-    mTop = 171
-    mHiggs = 125
-
+def boost_tthgg(v, phi, theta):
     phi1   = 2.02
     theta1 = 0.4
     phi2   = 1.2
@@ -354,65 +310,11 @@ def boost_tthgg(beta):
     phi5   = 2.1
     theta5 = 0.45
 
-    def F(x):
-        p1 = x[0]
-        p2 = x[1]
-        p4 = x[2]
-        p5 = x[3]
-        F = np.empty(4)
-        F[0] = np.emath.sqrt(p1**2 + mTop**2) + np.emath.sqrt(p2**2 + mTop**2) + p4 + p5 + mHiggs
-        F[1] = (p1 * np.sin(theta1) * np.cos(phi1)
-                + p2 * np.sin(theta2) * np.cos(phi2)
-                + p4 * np.sin(theta4) * np.cos(phi4)
-                + p5 * np.sin(theta5) * np.cos(phi5))
-        F[2] = (p1 * np.sin(theta1) * np.sin(phi1)
-                + p2 * np.sin(theta2) * np.sin(phi2)
-                + p4 * np.sin(theta4) * np.sin(phi4)
-                + p5 * np.sin(theta5) * np.sin(phi5))
-        F[3] = (p1 * np.cos(theta1)
-                + p2 * np.cos(theta2)
-                + p4 * np.cos(theta4)
-                + p5 * np.cos(theta5))
-        return F
-
-    guess = np.array([100, -100, 100, -100])
-    p_opt = opt.newton_krylov(F, guess)
-
-    p1 = p_opt[0]
-    p2 = p_opt[1]
-    p4 = p_opt[2]
-    p5 = p_opt[3]
-
-    p1x = p1 * np.sin(theta1) * np.cos(phi1)
-    p1y = p1 * np.sin(theta1) * np.sin(phi1)
-    p1z = p1 * np.cos(theta1)
-
-    p2x = p2 * np.sin(theta2) * np.cos(phi2)
-    p2y = p2 * np.sin(theta2) * np.sin(phi2)
-    p2z = p2 * np.cos(theta2)
-
-    p4x = p4 * np.sin(theta4) * np.cos(phi4)
-    p4y = p4 * np.sin(theta4) * np.sin(phi4)
-    p4z = p4 * np.cos(theta4)
-
-    p5x = p5 * np.sin(theta5) * np.cos(phi5)
-    p5y = p5 * np.sin(theta5) * np.sin(phi5)
-    p5z = p5 * np.cos(theta5)
-
-    E1 = np.sqrt(p1**2 + mTop**2)
-    E2 = np.sqrt(p2**2 + mTop**2)
-    E4 = p4
-    E5 = p5
-
-    t1    = np.array([E1, p1x, p1y, p1z])
-    tbar2 = np.array([E2, p2x, p2y, p2z])
-    h3    = np.array([mHiggs, 0, 0, 0])
-    g4    = np.array([E4, p4x, p4y, p4z])
-    g5    = np.array([E5, p5x, p5y, p5z])
-    momenta = [t1, tbar2, h3, g4, g5]
+    angles = [phi1, theta1, phi2, theta2, phi4, theta4, phi5, theta5]
+    momenta = hp.tthggMomenta(angles)
     hcase = ['-', '+']
 
-    momenta_b = hp.boost(momenta, beta)
+    momenta_b = hp.boost(momenta, v, phi, theta)
 
     tthgg = amps.tthgg(*momenta, hcase)
     tthgg_b = amps.tthgg(*momenta_b, hcase)
@@ -421,33 +323,22 @@ def boost_tthgg(beta):
 
     print('\nTEST FOR tthgg BOOST:')
     print('----------------------------------------------')
-    if (abs(diff) <= 1e-8).all():
+    if abs(diff) <= 1e-8:
         print('test for tthgg boost passed!\n')
         print(f'unboosted spin sum:\n{np.sum(abs(tthgg)**2)}\n')
         print(f'boosted spin sum:\n{np.sum(abs(tthgg_b)**2)}\n')
         print(f'|diff| =\n{abs(diff)}')
-        print('the two amplitudes are equal')
+        print('the two spin sums are equal')
         print('----------------------------------------------\n')
     else:
         print('test for tthgg boost failed!\n')
         print(f'unboosted spin sum:\n{np.sum(abs(tthgg)**2)}\n')
         print(f'boosted spin sum:\n{np.sum(abs(tthgg_b)**2)}\n')
-        print(f'diff =\n{diff}')
+        print(f'|diff| =\n{abs(diff)}')
         print('----------------------------------------------\n')
     return
 
-def boost_tthgggg(beta):
-    gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
-    bx = beta[0]
-    by = beta[1]
-    bz = beta[2]
-    G = gamma**2 / (1 + gamma)
-
-    L = np.array([[       gamma,  - gamma * bx,  - gamma * by,  - gamma * bz],
-                  [- gamma * bx, 1 + G * bx**2,   G * bx * by,   G * bx * bz],
-                  [- gamma * by,   G * bx * by, 1 + G * by**2,   G * by * bz],
-                  [- gamma * bz,   G * bx * bz,   G * by * bz, 1 + G * bz**2]])
-    
+def boost_tthgggg(v, phi, theta):
     mTop = 171
     mHiggs = 125
 
@@ -480,25 +371,12 @@ def boost_tthgggg(beta):
     g5    = np.array([-Eglu, pglux2, pgluy2, pgluz2])
     g6    = np.array([-Eglu, -pglux1, -pgluy1, -pgluz1])
     g7    = np.array([-Eglu, -pglux2, -pgluy2, -pgluz2])
-
-    metric = np.array([[ 1,  0,  0,  0],
-                       [ 0, -1,  0,  0],
-                       [ 0,  0, -1,  0],
-                       [ 0,  0,  0, -1]])
-    
-
-    t1_b    = L @ t1
-    tbar2_b = L @ tbar2
-    h3_b    = L @ h3
-    g4_b    = L @ g4
-    g5_b    = L @ g5
-    g6_b    = L @ g6
-    g7_b    = L @ g7
-    
+    momenta = [t1, tbar2, h3, g4, g5, g6, g7]
+    momenta_b = hp.boost(momenta, v, phi, theta)
 
     hcase = ['-', '+', '-', '+']
-    tthgggg = amps.tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase)
-    tthgggg_b = amps.tthgggg(t1_b, tbar2_b, h3_b, g4_b, g5_b, g6_b, g7_b, hcase)
+    tthgggg = amps.tthgggg(*momenta, hcase)
+    tthgggg_b = amps.tthgggg(*momenta_b, hcase)
 
     diff = np.sum(abs(tthgggg)**2) - np.sum(abs(tthgggg_b)**2)
 

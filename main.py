@@ -2,70 +2,41 @@ import amplitudes.amps as amps
 import tests
 import numpy as np
 import amplitudes.helpers as hp
-import scipy.optimize as opt
-
-# How to obtain an amplitude:
-# Write the (all outgoing) four-momenta involved in the amplitude as four-component lists:
-t1    = [   5,   -3, -1,  0]
-tbar2 = [   5,    0,  1, -4]
-h3    = [   5,    0,  0,  1]
-g4    = [-7.5,  7.5,  0,  0]
-g5    = [-7.5, -7.5,  0,  0]
-g6    = [   1,    0,  1,  0]
-g7    = [   1,    0, -1,  0]
-
-# Choose a helicity case by listing the helicities of the massless particles as + or - in order
-hcase = ['-', '+', '-', '+']
 
 # All the color-ordered helicity amplitudes for (tth + n partons) are in amps.py.
 # To obtain a helicity amplitude call the function for the desired amplitude and helicity case.
 # Returns the helicity amplitude as a 2x2 matrix.
 # Spin of the top quark runs along axis 0, spin of the anti-top quark runs along axis 1.
 # The tthg amplitude also requires a reference momentum 'ref', which cannot be proportional to g4.
-# Example for tthgggg amplitude:
+# Example for tthgg amplitude:
 
-# top and Higgs masses
-mTop = 171
-mHiggs = 125
+# phase space variables for tthgg scattering in the Higgs boson's rest frame
+phi1   = 2.02
+theta1 = 0.4
+phi2   = 1.2
+theta2 = 0.9
+phi4   = 0.9
+theta4 = 1.2
+phi5   = 2.1
+theta5 = 0.45
+angles = [phi1, theta1, phi2, theta2, phi4, theta4, phi5, theta5]
 
-# phase space variables for tthgggg scattering in the Higgs boson's rest frame
-phiTop = 1.02
-thetaTop = 0.87
-pTop = 200
-phiGlu1 = 1.2
-thetaGlu1 = 0.9
-phiGlu2 = 0.31
-thetaGlu2 = 1
+# Choose a helicity case by listing the helicities of the massless particles as + or - in order
+hcase = ['-', '+']
 
 # Turn the phase-space variables to components of momenta
-Etop = np.sqrt(mTop**2 + pTop**2)
-ptopx = pTop * np.sin(thetaTop) * np.cos(phiTop)
-ptopy = pTop * np.sin(thetaTop) * np.sin(phiTop)
-ptopz = pTop * np.cos(thetaTop)
+momenta = hp.tthggMomenta(angles)
 
-Eglu = (2 * Etop + mHiggs) / 4
-pglux1 = Eglu * np.sin(thetaGlu1) * np.cos(phiGlu1)
-pgluy1 = Eglu * np.sin(thetaGlu1) * np.sin(phiGlu1)
-pgluz1 = Eglu * np.cos(thetaGlu1)
-
-pglux2 = Eglu * np.sin(thetaGlu2) * np.cos(phiGlu2)
-pgluy2 = Eglu * np.sin(thetaGlu2) * np.sin(phiGlu2)
-pgluz2 = Eglu * np.cos(thetaGlu2)
-
-# Initialize four-momenta for tthgggg scattering
-t1    = np.array([Etop, ptopx, ptopy, ptopz])
-tbar2 = np.array([Etop, -ptopx, -ptopy, -ptopz])
-h3    = np.array([mHiggs, 0, 0, 0])
-g4    = np.array([-Eglu, pglux1, pgluy1, pgluz1])
-g5    = np.array([-Eglu, pglux2, pgluy2, pgluz2])
-g6    = np.array([-Eglu, -pglux1, -pgluy1, -pgluz1])
-g7    = np.array([-Eglu, -pglux2, -pgluy2, -pgluz2])
+# optionally boost the momenta:
+v = 0.9
+phi = 1.5
+theta = 0.6
+momenta_b = hp.boost(momenta, v, phi, theta)
 
 # Evaluate color-ordered subamplitude
-tthgggg = amps.tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase)
+tthgg = amps.tthgg(*momenta_b, hcase)
 
-print(f'tthgggg for {hcase[0]}, {hcase[1]}, {hcase[2]}, {hcase[3]} helicities =\n{tthgggg}\n')
-
+print(f'tthgg for {hcase[0]}, {hcase[1]} helicities =\n{tthgg}\n')
 
 # Some tests that I ran to check my amplitudes:
 # -----------------------------------------------------------------
@@ -130,30 +101,18 @@ v = 0.9
 phi = 1.5
 theta = 0.6
 
-bx = np.sin(theta) * np.cos(phi)
-by = np.sin(theta) * np.sin(phi)
-bz = np.cos(theta)
-
-beta = v * np.array([bx, by, bz])
-
 # uncomment to run test:
-# tests.boost_ttgg(beta)
+# tests.boost_ttgg(v, phi, theta)
 
 # ---------------------------------------------------------------
 # tthg boost test: 
 
-v = 0.9999
+v = 0.5
 phi = 1.5
 theta = 0.6
 
-bx = np.sin(theta) * np.cos(phi)
-by = np.sin(theta) * np.sin(phi)
-bz = np.cos(theta)
-
-beta = v * np.array([bx, by, bz])
-
 # uncomment to run test:
-# tests.boost_tthg(beta)
+# tests.boost_tthg(v, phi, theta)
 
 # ---------------------------------------------------------------
 # tthgg boost test: 
@@ -162,14 +121,8 @@ v = 0.96
 phi = 1.5
 theta = 0.6
 
-bx = np.sin(theta) * np.cos(phi)
-by = np.sin(theta) * np.sin(phi)
-bz = np.cos(theta)
-
-beta = v * np.array([bx, by, bz])
-
 # uncomment to run test:
-tests.boost_tthgg(beta)
+tests.boost_tthgg(v, phi, theta)
 
 # ---------------------------------------------------------------
 # tthgggg boost test: 
@@ -178,11 +131,5 @@ v = 0.5
 phi = 1.2
 theta = 0.8
 
-bx = np.sin(theta) * np.cos(phi)
-by = np.sin(theta) * np.sin(phi)
-bz = np.cos(theta)
-
-beta = v * np.array([bx, by, bz])
-
 # uncomment to run test:
-# tests.boost_tthgggg(beta)
+# tests.boost_tthgggg(v, phi, theta)
