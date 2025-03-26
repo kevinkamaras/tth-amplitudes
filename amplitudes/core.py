@@ -107,7 +107,7 @@ def qqqq(q1, qbar2, q3, qbar4, hcase):
             return hp.abraket(q1, q3) * hp.sbraket(qbar4, qbar2) / s34
     return 0
 
-def ttgg(t1, tbar2, g4, g3, hcase):
+def ttgg(t1, tbar2, g3, g4, hcase):
     '''from Campbell2023'''
     p34 = g3.vector + g4.vector
     s34 = hp.minkowski(p34)
@@ -245,6 +245,108 @@ def tthgg(t1, tbar2, h3, g4, g5, hcase):
           @ hp.epsLow @ ttg(negp24, tbar2, hat4, hcase[0], ref=g5)) / (s24 - t1.mass**2)
     
     amp = d1 + d2
+    return amp
+
+def tthgg_antiholo(t1, tbar2, h3, g4, g5, hcase):
+    P = [tbar2, g4, g5]
+    p245 = tbar2.vector + g4.vector + g5.vector
+    s245 = hp.minkowski(p245)
+    z245 = - t1.mass * (((g4.abra @ tbar2.momentum() @ g4.sket)
+                       + (g5.abra @ tbar2.momentum() @ g5.sket)
+                       + (g5.abra @ g4.momentum() @ g5.sket))
+                       / (g5.sbra @ t1.sketabra() @ (tbar2.momentum() + g4.momentum()) @ g5.sket))
+    hat1 = copy.deepcopy(t1)
+    hat5 = copy.deepcopy(g5)
+    hat1.sbra = t1.sbra - (z245 / t1.mass) * (hp.sbraket(t1, g5) @ g5.sbra)
+    hat1.sket = t1.sket - (z245 / t1.mass) * (g5.sket @ hp.sbraket(g5, t1))
+    hat1.vector = np.array([np.trace((hat1.aket @ hp.epsLow @ hat1.sbra) @ sigma) / 2
+                            for sigma in hp.pauliBar])
+    hat5.abra = g5.abra - (z245 / t1.mass) * (g5.sbra @ t1.sketabra())
+    hat5.aket = g5.aket + (z245 / t1.mass) * (t1.momentum() @ g5.sket)
+    hat5.vector = np.array([(hat5.abra @ sigma @ hat5.sket)[0, 0] / 2 for sigma in hp.pauli])
+    hatp245 = hp.massive((tbar2.vector + g4.vector + hat5.vector))
+    negp245 = hp.massive((- tbar2.vector - g4.vector - hat5.vector))
+    d1 = (tth(hat1, hatp245, h3) @ hp.epsLow @ ttgg(negp245, tbar2, g4, hat5, hcase)) / (s245 - t1.mass**2)
+
+    P = [g4, g5]
+    p45 = g4.vector + g5.vector
+    s45 = hp.minkowski(p45)
+    z45 = - t1.mass * ((g5.sbra @ g4.sketabra() @ g5.aket) / (g5.sbra @ g4.sketabra() @ t1.momentum() @ g5.sket))
+    hat1 = copy.deepcopy(t1)
+    hat5 = copy.deepcopy(g5)
+    hat1.sbra = t1.sbra - (z45 / t1.mass) * (hp.sbraket(t1, g5) @ g5.sbra)
+    hat1.sket = t1.sket - (z45 / t1.mass) * (g5.sket @ hp.sbraket(g5, t1))
+    hat1.vector = np.array([np.trace((hat1.aket @ hp.epsLow @ hat1.sbra) @ sigma) / 2
+                            for sigma in hp.pauliBar])
+    hat5.abra = g5.abra - (z45 / t1.mass) * (g5.sbra @ t1.sketabra())
+    hat5.aket = g5.aket + (z45 / t1.mass) * (t1.momentum() @ g5.sket)
+    hat5.vector = np.array([(hat5.abra @ sigma @ hat5.sket)[0, 0] / 2 for sigma in hp.pauli])
+    # print(f'p2.p45^ = {hp.dot(tbar2.vector, g4.vector + hat5.vector)}')
+    # print(f'p1^3.p45^ = {hp.dot(hat1.vector + h3.vector, g4.vector + hat5.vector)}')
+    hatp45 = hp.massless(g4.vector + hat5.vector)
+    negp45 = hp.massless(-g4.vector - hat5.vector)
+    d2a = (tthg(hat1, tbar2, h3, hatp45, '+', ref=g5) * ggg(negp45, g4, hat5, ['-'] + list(hcase))) / s45
+    d2b = (tthg(hat1, tbar2, h3, hatp45, '-', ref=g5) * ggg(negp45, g4, hat5, ['+'] + list(hcase))) / s45
+
+    # print(f'<P^|1^|P^] = {hatp45.abra @ hat1.momentum() @ hatp45.sket}')
+    # print(f'p1^.p4 = {hp.dot(hat1.vector, g4.vector)}')
+    # print(f'p1^.p5^ = {hp.dot(hat1.vector, hat5.vector)}')
+    print(f'p2 = {tbar2.vector}')
+    print(f'p45^ = {hatp45.vector}')
+    print(f'p4 = {g4.vector}')
+    print(f'p5^ = {hat5.vector}')
+    print(f'p2.p45^ = {hp.dot(tbar2.vector, hatp45.vector)}')
+    print(f'p1^3.p45^ = {hp.dot(hat1.vector + h3.vector, hatp45.vector)}')
+    print(f'p13.p45 = {hp.dot(t1.vector + h3.vector, p45)}')
+    print(f'p2.p45 = {hp.dot(tbar2.vector, p45)}')
+
+    amp = d1 + d2a + d2b
+    return amp
+
+def tthgg_massive(t1, tbar2, h3, g4, g5, hcase):
+    P = [tbar2, g4, g5]
+    p245 = tbar2.vector + g4.vector + g5.vector
+    s245 = hp.minkowski(p245)
+    z245 = t1.mass * (((g4.abra @ tbar2.momentum() @ g4.sket)
+                       + (g5.abra @ tbar2.momentum() @ g5.sket)
+                       + (g5.abra @ g4.momentum() @ g5.sket))
+                       / (g5.abra @ (g4.momentum() + tbar2.momentum()) @ t1.sketabra() @ g5.aket))
+    hat1 = copy.deepcopy(t1)
+    hat5 = copy.deepcopy(g5)
+    hat1.abra = t1.abra - (z245 / t1.mass) * (hp.abraket(t1, g5) @ g5.abra)
+    hat1.aket = t1.aket - (z245 / t1.mass) * (g5.aket @ hp.abraket(g5, t1))
+    hat1.vector = np.array([np.trace((hat1.aket @ hp.epsLow @ hat1.sbra) @ sigma) / 2
+                            for sigma in hp.pauliBar])
+    hat5.sbra = g5.sbra + (z245 / t1.mass) * (g5.abra @ t1.momentum())
+    hat5.sket = g5.sket - (z245 / t1.mass) * (t1.sketabra() @ g5.aket)
+    hat5.vector = np.array([(hat5.abra @ sigma @ hat5.sket)[0, 0] / 2 for sigma in hp.pauli])
+    hatp245 = hp.massive((tbar2.vector + g4.vector + hat5.vector))
+    negp245 = hp.massive((- tbar2.vector - g4.vector - hat5.vector))
+    d1 = (tth(hat1, hatp245, h3) @ hp.epsLow @ ttgg(negp245, tbar2, g4, hat5, hcase)) / (s245 - t1.mass**2)
+
+    print(hp.sbraket(g4, hat5))
+    print(ttgg(negp245, tbar2, g4, hat5, hcase))
+
+
+    P = [g4, g5]
+    p45 = g4.vector + g5.vector
+    s45 = hp.minkowski(p45)
+    z45 = t1.mass * (g5.abra @ g4.momentum() @ g5.sket) / (g5.abra @ g4.momentum() @ t1.sketabra() @ g5.aket)
+    hat1 = copy.deepcopy(t1)
+    hat5 = copy.deepcopy(g5)
+    hat1.abra = t1.abra - (z45 / t1.mass) * (hp.abraket(t1, g5) @ g5.abra)
+    hat1.aket = t1.aket - (z45 / t1.mass) * (g5.aket @ hp.abraket(g5, t1))
+    hat1.vector = np.array([np.trace((hat1.aket @ hp.epsLow @ hat1.sbra) @ sigma) / 2
+                            for sigma in hp.pauliBar])
+    hat5.sbra = g5.sbra + (z45 / t1.mass) * (g5.abra @ t1.momentum())
+    hat5.sket = g5.sket - (z45 / t1.mass) * (t1.sketabra() @ g5.aket)
+    hat5.vector = np.array([(hat5.abra @ sigma @ hat5.sket)[0, 0] / 2 for sigma in hp.pauli])
+    hatp45 = hp.massless(g4.vector + hat5.vector)
+    negp45 = hp.massless(-g4.vector - hat5.vector)
+    d2a = (tthg(hat1, tbar2, h3, hatp45, '+', ref=g5) * ggg(negp45, g4, hat5, ['-'] + list(hcase))) / s45
+    d2b = (tthg(hat1, tbar2, h3, hatp45, '-', ref=g5) * ggg(negp45, g4, hat5, ['+'] + list(hcase))) / s45
+
+    amp = d1 + d2a + d2b
     return amp
 
 def tthqq(t1, tbar2, h3, q4, qbar5, hcase):

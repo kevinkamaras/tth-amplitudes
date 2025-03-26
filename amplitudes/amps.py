@@ -25,6 +25,30 @@ def tthgg(t1, tbar2, h3, g4, g5, hcase):
     g5 = hp.massless(g5)
     return core.tthgg(t1, tbar2, h3, g4, g5, hcase)
 
+def tthgg_antiholo(t1, tbar2, h3, g4, g5, hcase):
+    '''
+    Color-ordered tthgg amplitude. Input momenta as four-component lists and hcase = ['+/-', '+/-'],
+    Outputs a 2x2 matrix with top quark spin along axis 0 and anti-top quark spin along axis 1.
+    '''
+    t1 = hp.massive(t1)
+    tbar2 = hp.massive(tbar2)
+    h3 = hp.massive(h3)
+    g4 = hp.massless(g4)
+    g5 = hp.massless(g5)
+    return core.tthgg_antiholo(t1, tbar2, h3, g4, g5, hcase)
+
+def tthgg_massive(t1, tbar2, h3, g4, g5, hcase):
+    '''
+    Color-ordered tthgg amplitude. Input momenta as four-component lists and hcase = ['+/-', '+/-'],
+    Outputs a 2x2 matrix with top quark spin along axis 0 and anti-top quark spin along axis 1.
+    '''
+    t1 = hp.massive(t1)
+    tbar2 = hp.massive(tbar2)
+    h3 = hp.massive(h3)
+    g4 = hp.massless(g4)
+    g5 = hp.massless(g5)
+    return core.tthgg_massive(t1, tbar2, h3, g4, g5, hcase)
+
 def tthqq(t1, tbar2, h3, q4, qbar5, hcase):
     '''
     Color-ordered tthqq amplitude. Input momenta as four-component lists and hcase = ['+/-', '+/-'],

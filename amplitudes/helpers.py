@@ -9,6 +9,7 @@ sig1 = np.array([[0,  1 ], [1 ,  0]])
 sig2 = np.array([[0, -1j], [1j,  0]])
 sig3 = np.array([[1,  0 ], [0 , -1]])
 pauli = [sig0, sig1, sig2, sig3]
+pauliBar = [sig0, -sig1, -sig2, -sig3]
 
 class massless:
     '''spinors for a given massless momentum'''
@@ -137,6 +138,26 @@ def minkowski(p):
         raise TypeError('p is not a four vector')
     return p[0]**2 - p[1]**2 - p[2]**2 - p[3]**2
 
+def dot(p, q):
+    if len(p) != 4 or len(q) != 4:
+        raise TypeError('please choose two four-vectors')
+    return p[0]*q[0] - p[1]*q[1] - p[2]*q[2] - p[3]*q[3]
+
+def boost(momenta, beta):
+    gamma = 1 / np.sqrt(1 - np.dot(beta, beta))
+    bx = beta[0]
+    by = beta[1]
+    bz = beta[2]
+    G = gamma**2 / (1 + gamma)
+
+    L = np.array([[       gamma,  - gamma * bx,  - gamma * by,  - gamma * bz],
+                    [- gamma * bx, 1 + G * bx**2,   G * bx * by,   G * bx * bz],
+                    [- gamma * by,   G * bx * by, 1 + G * by**2,   G * by * bz],
+                    [- gamma * bz,   G * bx * bz,   G * by * bz, 1 + G * bz**2]])
+
+    momenta_b = [L @ p for p in momenta]
+    return momenta_b
+
 def abraket(a, b):
     '''angle braket of two spinors. 0-, 1-, or 2-dimensional output'''
     braket = a.abra @ b.aket
@@ -192,6 +213,64 @@ def onShell(pi, pj, P, hcase, side):
             if side == 'left':
                 z = (pj.abra @ P[0].momentum() @ pj.sket) / (pj.abra @ P[0].momentum() @ pi.sket)
             elif len(P) == 2:
+                z = - (pi.abra @ P[0].momentum() @ pi.sket) / (pj.abra @ P[0].momentum() @ pi.sket)
+            elif len(P) == 3:
+                momenta = P[0].momentum() + P[1].momentum()
+                z = - ((  pi.abra @ momenta @ pi.sket
+                    + P[-2].abra @ P[0].momentum() @ P[-2].sket)
+                    / (pj.abra @ momenta @ pi.sket))
+            else:
+                momenta1 = P[0].momentum() + P[1].momentum() + P[2].momentum()
+                momenta2 = P[0].momentum() + P[1].momentum()
+                z = - ((  pi.abra @ momenta1 @ pi.sket
+                    + P[-2].abra @ momenta2 @ P[-2].sket
+                    + P[-3].abra @ P[0].momentum() @ P[-3].sket)
+                    / (pj.abra @ momenta1 @ pi.sket))
+            z = z[0, 0]
+            hati.aket = pi.aket + z * pj.aket
+            hati.abra = pi.abra + z * pj.abra
+            hati.vector = np.array([(hati.abra @ sigma @ hati.sket)[0, 0] / 2 for sigma in pauli])
+            hatj.sbra = pj.sbra - z * pi.sbra
+            hatj.sket = pj.sket - z * pi.sket
+            hatj.vector = np.array([(hatj.abra @ sigma @ hatj.sket)[0, 0] / 2 for sigma in pauli])
+    return hati, hatj
+
+def onShell_massive(pi, pj, P, hcase):
+    z = 0
+    hati = copy.deepcopy(pi)
+    hatj = copy.deepcopy(pj)
+    match hcase[-1]:
+        case '+':
+            if len(P) == 2:
+                z = (pi.abra @ P[0].momentum() @ pi.sket) / (pi.abra @ P[0].momentum() @ pj.sket)
+            elif len(P) == 3:
+                momenta = P[0].momentum() + P[1].momentum()
+                z = pi.mass * (((P[-2].abra @ P[0].momentum() @ P[-2].sket)
+                       + (pj.abra @ momenta @ pj.sket))
+                       / (pj.abra @ momenta @ pi.sketabra() @ pj.aket))
+            else:
+                momenta1 = np.array([p.momentum() for p in P[:-1]])
+                momenta2 = np.array([p.momentum() for p in P[:-2]])
+                sum1 = np.array([[0j, 0j], [0j, 0j]])
+                sum2 = np.array([[0j, 0j], [0j, 0j]])
+                for m in momenta1:
+                    sum1 += m
+                for m in momenta2:
+                    sum2 += m
+                z = ((  pi.abra @ sum1 @ pi.sket
+                    + P[-2].abra @ sum2 @ P[-2].sket
+                    + P[-3].abra @ P[0].momentum() @ P[-3].sket)
+                    / (pi.abra @ sum1 @ pj.sket))
+            z = z[0, 0]
+            hati.abra = pi.abra - (z / pi.mass) * (abraket(pi, pj) @ pj.abra)
+            hati.aket = pi.aket - (z / pi.mass) * (pj.aket @ abraket(pj, pi))
+            hati.vector = np.array([np.trace((hati.aket @ epsLow @ hati.sbra) @ sigma) / 2
+                                    for sigma in pauliBar])
+            hatj.sbra = pj.sbra + (z / pi.mass) * (pj.abra @ pi.momentum())
+            hatj.sket = pj.sket - (z / pi.mass) * (pi.sketabra() @ pj.aket)
+            hatj.vector = np.array([(hatj.abra @ sigma @ hatj.sket)[0, 0] / 2 for sigma in pauli])
+        case '-':
+            if len(P) == 2:
                 z = - (pi.abra @ P[0].momentum() @ pi.sket) / (pj.abra @ P[0].momentum() @ pi.sket)
             elif len(P) == 3:
                 momenta = P[0].momentum() + P[1].momentum()
