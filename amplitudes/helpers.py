@@ -2,6 +2,9 @@ import numpy as np
 import copy
 import scipy.optimize as opt
 
+mTop = 171
+mHiggs = 125
+
 epsLow  = np.array([[0, -1], [ 1, 0]])
 epsHigh = np.array([[0,  1], [-1, 0]])
 
@@ -15,13 +18,15 @@ pauliBar = [sig0, -sig1, -sig2, -sig3]
 class massless:
     '''spinors for a given massless momentum'''
     def __init__(self, p):
+        self.valid = True
         p0 = p[0]
         p1 = p[1]
         p2 = p[2]
         p3 = p[3]
         m = np.emath.sqrt(p0**2 - p1**2 - p2**2 - p3**2)
         if abs(m) >= 1e-3:
-            raise ValueError(f'momentum is not massless (m = {abs(m)})')
+            print(f'momentum is not massless (m = {abs(m)}), disregarding amplitude')
+            self.valid = False
         pp = p0 + p3
         pm = p0 - p3
         pt = p1 + 1j*p2
@@ -49,6 +54,7 @@ class massless:
 class massive:
     '''spinors for a given massive momentum'''
     def __init__(self, p):
+        self.valid = True
         p0 = p[0]
         p1 = p[1]
         p2 = p[2]
@@ -165,8 +171,6 @@ def boost(momenta, v, phi, theta):
     return momenta_b
 
 def tthggMomenta(angles):
-    mTop = 171
-    mHiggs = 125
     phi1   = angles[0]
     theta1 = angles[1]
     phi2   = angles[2]
@@ -233,6 +237,180 @@ def tthggMomenta(angles):
     g5    = np.array([E5, p5x, p5y, p5z])
 
     momenta = [t1, tbar2, h3, g4, g5]
+    return momenta
+
+def tthgggMomenta(angles, p1):
+    phi1   = angles[0]
+    theta1 = angles[1]
+    phi2   = angles[2]
+    theta2 = angles[3]
+    phi4   = angles[4]
+    theta4 = angles[5]
+    phi5   = angles[6]
+    theta5 = angles[7]
+    phi6   = angles[8]
+    theta6 = angles[9]
+
+    def F(x):
+        p2 = x[0]
+        p4 = x[1]
+        p5 = x[2]
+        p6 = x[3]
+        F = np.empty(4)
+        F[0] = (np.emath.sqrt(p1**2 + mTop**2) + np.emath.sqrt(p2**2 + mTop**2)
+                + p4 + p5 + p6 + mHiggs)
+        F[1] = (p1 * np.sin(theta1) * np.cos(phi1)
+                + p2 * np.sin(theta2) * np.cos(phi2)
+                + p4 * np.sin(theta4) * np.cos(phi4)
+                + p5 * np.sin(theta5) * np.cos(phi5)
+                + p6 * np.sin(theta6) * np.cos(phi6))
+        F[2] = (p1 * np.sin(theta1) * np.sin(phi1)
+                + p2 * np.sin(theta2) * np.sin(phi2)
+                + p4 * np.sin(theta4) * np.sin(phi4)
+                + p5 * np.sin(theta5) * np.sin(phi5)
+                + p6 * np.sin(theta6) * np.sin(phi6))
+        F[3] = (p1 * np.cos(theta1)
+                + p2 * np.cos(theta2)
+                + p4 * np.cos(theta4)
+                + p5 * np.cos(theta5)
+                + p6 * np.cos(theta6))
+        return F
+    
+    guess = np.array([-p1, -p1, -p1, -p1])
+    p_opt = opt.newton_krylov(F, guess)
+
+    p2 = p_opt[0]
+    p4 = p_opt[1]
+    p5 = p_opt[2]
+    p6 = p_opt[3]
+
+    p1x = p1 * np.sin(theta1) * np.cos(phi1)
+    p1y = p1 * np.sin(theta1) * np.sin(phi1)
+    p1z = p1 * np.cos(theta1)
+
+    p2x = p2 * np.sin(theta2) * np.cos(phi2)
+    p2y = p2 * np.sin(theta2) * np.sin(phi2)
+    p2z = p2 * np.cos(theta2)
+
+    p4x = p4 * np.sin(theta4) * np.cos(phi4)
+    p4y = p4 * np.sin(theta4) * np.sin(phi4)
+    p4z = p4 * np.cos(theta4)
+
+    p5x = p5 * np.sin(theta5) * np.cos(phi5)
+    p5y = p5 * np.sin(theta5) * np.sin(phi5)
+    p5z = p5 * np.cos(theta5)
+
+    p6x = p6 * np.sin(theta6) * np.cos(phi6)
+    p6y = p6 * np.sin(theta6) * np.sin(phi6)
+    p6z = p6 * np.cos(theta6)
+
+    E1 = np.sqrt(p1**2 + mTop**2)
+    E2 = np.sqrt(p2**2 + mTop**2)
+    E4 = p4
+    E5 = p5
+    E6 = p6
+
+    t1    = np.array([E1, p1x, p1y, p1z])
+    tbar2 = np.array([E2, p2x, p2y, p2z])
+    h3    = np.array([mHiggs, 0, 0, 0])
+    g4    = np.array([E4, p4x, p4y, p4z])
+    g5    = np.array([E5, p5x, p5y, p5z])
+    g6    = np.array([E6, p6x, p6y, p6z])
+
+    momenta = [t1, tbar2, h3, g4, g5, g6]
+    
+    return momenta
+
+def tthggggMomenta(angles, p1, p2):
+    phi1   = angles[0]
+    theta1 = angles[1]
+    phi2   = angles[2]
+    theta2 = angles[3]
+    phi4   = angles[4]
+    theta4 = angles[5]
+    phi5   = angles[6]
+    theta5 = angles[7]
+    phi6   = angles[8]
+    theta6 = angles[9]
+    phi7   = angles[10]
+    theta7 = angles[11]
+
+    def F(x):
+        p4 = x[0]
+        p5 = x[1]
+        p6 = x[2]
+        p7 = x[3]
+        F = np.empty(4)
+        F[0] = (np.emath.sqrt(p1**2 + mTop**2) + np.emath.sqrt(p2**2 + mTop**2)
+                + p4 + p5 + p6 + p7 + mHiggs)
+        F[1] = (p1 * np.sin(theta1) * np.cos(phi1)
+                + p2 * np.sin(theta2) * np.cos(phi2)
+                + p4 * np.sin(theta4) * np.cos(phi4)
+                + p5 * np.sin(theta5) * np.cos(phi5)
+                + p6 * np.sin(theta6) * np.cos(phi6)
+                + p7 * np.sin(theta7) * np.cos(phi7))
+        F[2] = (p1 * np.sin(theta1) * np.sin(phi1)
+                + p2 * np.sin(theta2) * np.sin(phi2)
+                + p4 * np.sin(theta4) * np.sin(phi4)
+                + p5 * np.sin(theta5) * np.sin(phi5)
+                + p6 * np.sin(theta6) * np.sin(phi6)
+                + p7 * np.sin(theta7) * np.sin(phi7))
+        F[3] = (p1 * np.cos(theta1)
+                + p2 * np.cos(theta2)
+                + p4 * np.cos(theta4)
+                + p5 * np.cos(theta5)
+                + p6 * np.cos(theta6)
+                + p7 * np.cos(theta7))
+        return F
+
+    guess = np.array([-p1, -p1, -p1, -p1])
+    p_opt = opt.newton_krylov(F, guess)
+
+    p4 = p_opt[0]
+    p5 = p_opt[1]
+    p6 = p_opt[2]
+    p7 = p_opt[3]
+
+    p1x = p1 * np.sin(theta1) * np.cos(phi1)
+    p1y = p1 * np.sin(theta1) * np.sin(phi1)
+    p1z = p1 * np.cos(theta1)
+
+    p2x = p2 * np.sin(theta2) * np.cos(phi2)
+    p2y = p2 * np.sin(theta2) * np.sin(phi2)
+    p2z = p2 * np.cos(theta2)
+
+    p4x = p4 * np.sin(theta4) * np.cos(phi4)
+    p4y = p4 * np.sin(theta4) * np.sin(phi4)
+    p4z = p4 * np.cos(theta4)
+
+    p5x = p5 * np.sin(theta5) * np.cos(phi5)
+    p5y = p5 * np.sin(theta5) * np.sin(phi5)
+    p5z = p5 * np.cos(theta5)
+
+    p6x = p6 * np.sin(theta6) * np.cos(phi6)
+    p6y = p6 * np.sin(theta6) * np.sin(phi6)
+    p6z = p6 * np.cos(theta6)
+
+    p7x = p7 * np.sin(theta7) * np.cos(phi7)
+    p7y = p7 * np.sin(theta7) * np.sin(phi7)
+    p7z = p7 * np.cos(theta7)
+
+    E1 = np.sqrt(p1**2 + mTop**2)
+    E2 = np.sqrt(p2**2 + mTop**2)
+    E4 = p4
+    E5 = p5
+    E6 = p6
+    E7 = p7
+
+    t1    = np.array([E1, p1x, p1y, p1z])
+    tbar2 = np.array([E2, p2x, p2y, p2z])
+    h3    = np.array([mHiggs, 0, 0, 0])
+    g4    = np.array([E4, p4x, p4y, p4z])
+    g5    = np.array([E5, p5x, p5y, p5z])
+    g6    = np.array([E6, p6x, p6y, p6z])
+    g7    = np.array([E7, p7x, p7y, p7z])
+
+    momenta = [t1, tbar2, h3, g4, g5, g6, g7]
     return momenta
 
 def abraket(a, b):

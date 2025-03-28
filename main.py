@@ -1,6 +1,5 @@
 import amplitudes.amps as amps
 import tests
-import numpy as np
 import amplitudes.helpers as hp
 
 # All the color-ordered helicity amplitudes for (tth + n partons) are in amps.py.
@@ -34,9 +33,9 @@ theta = 0.6
 momenta_b = hp.boost(momenta, v, phi, theta)
 
 # Evaluate color-ordered subamplitude
-tthgg = amps.tthgg(*momenta_b, hcase)
+# tthgg = amps.tthgg(*momenta_b, hcase)
 
-print(f'tthgg for {hcase[0]}, {hcase[1]} helicities =\n{tthgg}\n')
+# print(f'tthgg for {hcase[0]}, {hcase[1]} helicities =\n{tthgg}\n')
 
 # Some tests that I ran to check my amplitudes:
 # -----------------------------------------------------------------
@@ -117,19 +116,50 @@ theta = 0.6
 # ---------------------------------------------------------------
 # tthgg boost test: 
 
-v = 0.96
-phi = 1.5
-theta = 0.6
-
-# uncomment to run test:
-tests.boost_tthgg(v, phi, theta)
-
-# ---------------------------------------------------------------
-# tthgggg boost test: 
-
-v = 0.5
-phi = 1.2
+v = 0.95
+phi = 1.3
 theta = 0.8
 
 # uncomment to run test:
+# tests.boost_tthgg(v, phi, theta)
+
+# ---------------------------------------------------------------
+# tthggg boost test: 
+
+v = 0.7
+phi = 0.3
+theta = 0.2
+
+# uncomment to run test:
+# tests.boost_tthggg(v, phi, theta)
+# ---------------------------------------------------------------
+# tthgggg boost test: 
+
+v = 0.2
+phi = 1.1
+theta = 0.7
+
+# uncomment to run test:
 # tests.boost_tthgggg(v, phi, theta)
+
+phi1   = 1.02
+theta1 = 0.87
+phi2   = 1.5
+theta2 = 1.2
+phi4   = 0.8
+theta4 = 0.2
+phi5   = 1.
+theta5 = 0.4
+phi6   = 2.2
+theta6 = 1.
+phi7   = 0.97
+theta7 = 0.8
+p1     = 200
+p2     = 250
+angles = [phi1, theta1, phi2, theta2, phi4, theta4,
+          phi5, theta5, phi6, theta6, phi7, theta7]
+
+momenta = hp.tthggggMomenta(angles, p1, p2)
+hcase = ['+', '+', '+', '+']
+tthgggg = amps.tthgggg(*momenta, hcase)
+# print(tthgggg)

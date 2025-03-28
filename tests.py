@@ -290,7 +290,7 @@ def boost_tthg(v, phi, theta):
         print('test for tthg boost passed!\n')
         print(f'unboosted spin sum:\n{spinSum}\n')
         print(f'boosted spin sum:\n{spinSum}\n')
-        print(f'|diff| =\n{abs(diff)}')
+        print(f'|diff| =\n{abs(diff)}\n')
         print('the two spin sums are equal')
         print('----------------------------------------------\n')
     else:
@@ -327,7 +327,7 @@ def boost_tthgg(v, phi, theta):
         print('test for tthgg boost passed!\n')
         print(f'unboosted spin sum:\n{np.sum(abs(tthgg)**2)}\n')
         print(f'boosted spin sum:\n{np.sum(abs(tthgg_b)**2)}\n')
-        print(f'|diff| =\n{abs(diff)}')
+        print(f'|diff| =\n{abs(diff)}\n')
         print('the two spin sums are equal')
         print('----------------------------------------------\n')
     else:
@@ -338,40 +338,66 @@ def boost_tthgg(v, phi, theta):
         print('----------------------------------------------\n')
     return
 
+def boost_tthggg(v, phi, theta):
+    phi1   = 2.02
+    theta1 = 0.4
+    phi2   = 1.2
+    theta2 = 0.9
+    phi4   = 0.9
+    theta4 = 1.2
+    phi5   = 2.1
+    theta5 = 0.45
+    phi6   = 1.7
+    theta6 = 1.11
+    p1 = 500
+
+    angles = [phi1, theta1, phi2, theta2, phi4, theta4, phi5, theta5, phi6, theta6]
+    momenta = hp.tthgggMomenta(angles, p1)
+    hcase = ['-', '+', '+']
+
+    momenta_b = hp.boost(momenta, v, phi, theta)
+
+    tthggg = amps.tthggg(*momenta, hcase)
+    tthggg_b = amps.tthggg(*momenta_b, hcase)
+
+    diff = np.sum(abs(tthggg)**2) - np.sum(abs(tthggg_b)**2)
+
+    print('\nTEST FOR tthggg BOOST:')
+    print('----------------------------------------------')
+    if abs(diff) / np.sum(abs(tthggg)**2) <= 1e-5:
+        print('test for tthggg boost passed!\n')
+        print(f'unboosted spin sum:\n{np.sum(abs(tthggg)**2)}\n')
+        print(f'boosted spin sum:\n{np.sum(abs(tthggg_b)**2)}\n')
+        print(f'|diff| =\n{abs(diff)}\n')
+        print('the two spin sums are equal')
+        print('----------------------------------------------\n')
+    else:
+        print('test for tthggg boost failed!\n')
+        print(f'unboosted spin sum:\n{np.sum(abs(tthggg)**2)}\n')
+        print(f'boosted spin sum:\n{np.sum(abs(tthggg_b)**2)}\n')
+        print(f'|diff| =\n{abs(diff)}')
+        print('----------------------------------------------\n')
+    return
+
 def boost_tthgggg(v, phi, theta):
-    mTop = 171
-    mHiggs = 125
+    phi1 = 1.02
+    theta1 = 0.87
+    phi2 = 1.5
+    theta2 = 1.2
+    phi4 = 0.8
+    theta4 = 0.2
+    phi5 = 1.
+    theta5 = 0.4
+    phi6 = 2.2
+    theta6 = 1.
+    phi7 = 0.97
+    theta7 = 0.8
+    p1 = 200
+    p2 = 250
+    angles = [phi1, theta1, phi2, theta2, phi4, theta4,
+              phi5, theta5, phi6, theta6, phi7, theta7]
 
-    phiTop = 1.02
-    thetaTop = 0.87
-    pTop = 200
-    phiGlu1 = 1.2
-    thetaGlu1 = 0.9
-    phiGlu2 = 0.31
-    thetaGlu2 = 1
-
-    Etop = np.sqrt(mTop**2 + pTop**2)
-    ptopx = pTop * np.sin(thetaTop) * np.cos(phiTop)
-    ptopy = pTop * np.sin(thetaTop) * np.sin(phiTop)
-    ptopz = pTop * np.cos(thetaTop)
-
-    Eglu = (2 * Etop + mHiggs) / 4
-    pglux1 = Eglu * np.sin(thetaGlu1) * np.cos(phiGlu1)
-    pgluy1 = Eglu * np.sin(thetaGlu1) * np.sin(phiGlu1)
-    pgluz1 = Eglu * np.cos(thetaGlu1)
-
-    pglux2 = Eglu * np.sin(thetaGlu2) * np.cos(phiGlu2)
-    pgluy2 = Eglu * np.sin(thetaGlu2) * np.sin(phiGlu2)
-    pgluz2 = Eglu * np.cos(thetaGlu2)
-
-    t1    = np.array([Etop, ptopx, ptopy, ptopz])
-    tbar2 = np.array([Etop, -ptopx, -ptopy, -ptopz])
-    h3    = np.array([mHiggs, 0, 0, 0])
-    g4    = np.array([-Eglu, pglux1, pgluy1, pgluz1])
-    g5    = np.array([-Eglu, pglux2, pgluy2, pgluz2])
-    g6    = np.array([-Eglu, -pglux1, -pgluy1, -pgluz1])
-    g7    = np.array([-Eglu, -pglux2, -pgluy2, -pgluz2])
-    momenta = [t1, tbar2, h3, g4, g5, g6, g7]
+    momenta = hp.tthggggMomenta(angles, p1, p2)
     momenta_b = hp.boost(momenta, v, phi, theta)
 
     hcase = ['-', '+', '-', '+']
@@ -382,16 +408,17 @@ def boost_tthgggg(v, phi, theta):
 
     print('\nTEST FOR tthgggg BOOST:')
     print('----------------------------------------------')
-    if (abs(diff) <= 1).all():
+    if abs(diff) / np.sum(abs(tthgggg)**2) <= 1e-5:
         print('test for tthgggg boost passed!\n')
-        print(f'unboosted spin sum:\n{tthgggg}\n')
-        print(f'boosted spin sum:\n{tthgggg_b}\n')
-        print(f'|diff| =\n{abs(diff)}')
+        print(f'unboosted spin sum:\n{np.sum(abs(tthgggg)**2)}\n')
+        print(f'boosted spin sum:\n{np.sum(abs(tthgggg_b)**2)}\n')
+        print(f'|diff| =\n{abs(diff)}\n')
         print('the two amplitudes are equal')
         print('----------------------------------------------\n')
     else:
         print('test for tthgggg boost failed!\n')
         print(f'unboosted spin sum:\n{np.sum(abs(tthgggg)**2)}\n')
         print(f'boosted spin sum:\n{np.sum(abs(tthgggg_b)**2)}\n')
+        print(f'|diff| =\n{abs(diff)}')
         print('----------------------------------------------\n')
     return

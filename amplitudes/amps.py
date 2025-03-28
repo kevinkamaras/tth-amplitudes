@@ -1,5 +1,6 @@
 import amplitudes.core as core
 import amplitudes.helpers as hp
+import numpy as np
 
 def tthg(t1, tbar2, h3, g4, hcase, ref):
     '''
@@ -11,7 +12,11 @@ def tthg(t1, tbar2, h3, g4, hcase, ref):
     h3 = hp.massive(h3)
     g4 = hp.massless(g4)
     ref = hp.massless(ref)
-    return core.tthg(t1, tbar2, h3, g4, hcase, ref)
+    momenta = [t1, tbar2, h3, g4, ref]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthg(t1, tbar2, h3, g4, hcase, ref)
+    return 0
 
 def tthgg(t1, tbar2, h3, g4, g5, hcase):
     '''
@@ -23,7 +28,11 @@ def tthgg(t1, tbar2, h3, g4, g5, hcase):
     h3 = hp.massive(h3)
     g4 = hp.massless(g4)
     g5 = hp.massless(g5)
-    return core.tthgg(t1, tbar2, h3, g4, g5, hcase)
+    momenta = [t1, tbar2, h3, g4, g5]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthgg(t1, tbar2, h3, g4, g5, hcase)
+    return 0
 
 def tthgg_antiholo(t1, tbar2, h3, g4, g5, hcase):
     '''
@@ -35,7 +44,11 @@ def tthgg_antiholo(t1, tbar2, h3, g4, g5, hcase):
     h3 = hp.massive(h3)
     g4 = hp.massless(g4)
     g5 = hp.massless(g5)
-    return core.tthgg_antiholo(t1, tbar2, h3, g4, g5, hcase)
+    momenta = [t1, tbar2, h3, g4, g5]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthgg_antiholo(t1, tbar2, h3, g4, g5, hcase)
+    return 0
 
 def tthgg_massive(t1, tbar2, h3, g4, g5, hcase):
     '''
@@ -47,7 +60,11 @@ def tthgg_massive(t1, tbar2, h3, g4, g5, hcase):
     h3 = hp.massive(h3)
     g4 = hp.massless(g4)
     g5 = hp.massless(g5)
-    return core.tthgg_massive(t1, tbar2, h3, g4, g5, hcase)
+    momenta = [t1, tbar2, h3, g4, g5]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthgg_massive(t1, tbar2, h3, g4, g5, hcase)
+    return 0
 
 def tthqq(t1, tbar2, h3, q4, qbar5, hcase):
     '''
@@ -59,7 +76,11 @@ def tthqq(t1, tbar2, h3, q4, qbar5, hcase):
     h3 = hp.massive(h3)
     q4 = hp.massless(q4)
     qbar5 = hp.massless(qbar5)
-    return core.tthqq(t1, tbar2, h3, q4, qbar5, hcase)
+    momenta = [t1, tbar2, h3, q4, q5]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthqq(t1, tbar2, h3, q4, qbar5, hcase)
+    return 0
 
 def tthggg(t1, tbar2, h3, g4, g5, g6, hcase):
     '''
@@ -72,7 +93,11 @@ def tthggg(t1, tbar2, h3, g4, g5, g6, hcase):
     g4 = hp.massless(g4)
     g5 = hp.massless(g5)
     g6 = hp.massless(g6)
-    return core.tthggg(t1, tbar2, h3, g4, g5, g6, hcase)
+    momenta = [t1, tbar2, h3, g4, g5, g6]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthggg(t1, tbar2, h3, g4, g5, g6, hcase)
+    return 0
 
 def tthqqg(t1, tbar2, h3, q4, qbar5, g6, hcase):
     '''
@@ -85,7 +110,11 @@ def tthqqg(t1, tbar2, h3, q4, qbar5, g6, hcase):
     q4 = hp.massless(q4)
     qbar5 = hp.massless(qbar5)
     g6 = hp.massless(g6)
-    return core.tthqqg(t1, tbar2, h3, q4, qbar5, g6, hcase)
+    momenta = [t1, tbar2, h3, q4, qbar5, g6]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthqqg(t1, tbar2, h3, q4, qbar5, g6, hcase)
+    return 0
 
 def tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase):
     '''
@@ -99,7 +128,11 @@ def tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase):
     g5 = hp.massless(g5)
     g6 = hp.massless(g6)
     g7 = hp.massless(g7)
-    return core.tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase)
+    momenta = [t1, tbar2, h3, g4, g5, g6, g7]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthgggg(t1, tbar2, h3, g4, g5, g6, g7, hcase)
+    return 0
 
 def tthqqgg(t1, tbar2, h3, q4, qbar5, g6, g7, hcase):
     '''
@@ -113,7 +146,11 @@ def tthqqgg(t1, tbar2, h3, q4, qbar5, g6, g7, hcase):
     qbar5 = hp.massless(qbar5)
     g6 = hp.massless(g6)
     g7 = hp.massless(g7)
-    return core.tthqqgg(t1, tbar2, h3, q4, qbar5, g6, g7, hcase)
+    momenta = [t1, tbar2, h3, q4, qbar5, g6, g7]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthqqgg(t1, tbar2, h3, q4, qbar5, g6, g7, hcase)
+    return 0
 
 def tthqqqq(t1, tbar2, h3, q4, qbar5, q6, qbar7, hcase):
     '''
@@ -127,4 +164,8 @@ def tthqqqq(t1, tbar2, h3, q4, qbar5, q6, qbar7, hcase):
     qbar5 = hp.massless(qbar5)
     q6 = hp.massless(q6)
     qbar7 = hp.massless(qbar7)
-    return core.tthqqqq(t1, tbar2, h3, q4, qbar5, q6, qbar7, hcase)
+    momenta = [t1, tbar2, h3, q4, qbar5, q6, qbar7]
+    valids = np.array([m.valid for m in momenta])
+    if valids.all():
+        return core.tthqqqq(t1, tbar2, h3, q4, qbar5, q6, qbar7, hcase)
+    return 0
