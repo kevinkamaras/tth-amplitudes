@@ -76,7 +76,7 @@ def tthqq(t1, tbar2, h3, q4, qbar5, hcase):
     h3 = hp.massive(h3)
     q4 = hp.massless(q4)
     qbar5 = hp.massless(qbar5)
-    momenta = [t1, tbar2, h3, q4, q5]
+    momenta = [t1, tbar2, h3, q4, qbar5]
     valids = np.array([m.valid for m in momenta])
     if valids.all():
         return core.tthqq(t1, tbar2, h3, q4, qbar5, hcase)

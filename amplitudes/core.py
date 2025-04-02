@@ -62,7 +62,7 @@ def ttg(t1, tbar2, g3, hcase, ref):
             return amp / 1j
     raise ValueError('missing gluon helicity')
 
-def tth(t1, tbar2, h3):
+def tth(t1, tbar2):
     amp = hp.abraket(t1, tbar2) + hp.sbraket(t1, tbar2)
     return amp
 
@@ -266,7 +266,7 @@ def tthgg_antiholo(t1, tbar2, h3, g4, g5, hcase):
     hat5.vector = np.array([(hat5.abra @ sigma @ hat5.sket)[0, 0] / 2 for sigma in hp.pauli])
     hatp245 = hp.massive((tbar2.vector + g4.vector + hat5.vector))
     negp245 = hp.massive((- tbar2.vector - g4.vector - hat5.vector))
-    d1 = (tth(hat1, hatp245, h3) @ hp.epsLow @ ttgg(negp245, tbar2, g4, hat5, hcase)) / (s245 - t1.mass**2)
+    d1 = (tth(hat1, hatp245) @ hp.epsLow @ ttgg(negp245, tbar2, g4, hat5, hcase)) / (s245 - t1.mass**2)
 
     P = [g4, g5]
     p45 = g4.vector + g5.vector
@@ -322,11 +322,7 @@ def tthgg_massive(t1, tbar2, h3, g4, g5, hcase):
     hat5.vector = np.array([(hat5.abra @ sigma @ hat5.sket)[0, 0] / 2 for sigma in hp.pauli])
     hatp245 = hp.massive((tbar2.vector + g4.vector + hat5.vector))
     negp245 = hp.massive((- tbar2.vector - g4.vector - hat5.vector))
-    d1 = (tth(hat1, hatp245, h3) @ hp.epsLow @ ttgg(negp245, tbar2, g4, hat5, hcase)) / (s245 - t1.mass**2)
-
-    print(hp.sbraket(g4, hat5))
-    print(ttgg(negp245, tbar2, g4, hat5, hcase))
-
+    d1 = (tth(hat1, hatp245) @ hp.epsLow @ ttgg(negp245, tbar2, g4, hat5, hcase)) / (s245 - t1.mass**2)
 
     P = [g4, g5]
     p45 = g4.vector + g5.vector

@@ -1,4 +1,4 @@
-Calculator for (tth + n parton) color-ordered amplitudes.
+# Calculator for (tth + n parton) color-ordered amplitudes.
 
 - main.py has explanations and an example of how to obtain an amplitude from a set of momenta and a list of helicities.
 - amps.py contains all the functions for the amplitudes, namely

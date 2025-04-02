@@ -33,9 +33,8 @@ theta = 0.6
 momenta_b = hp.boost(momenta, v, phi, theta)
 
 # Evaluate color-ordered subamplitude
-# tthgg = amps.tthgg(*momenta_b, hcase)
-
-# print(f'tthgg for {hcase[0]}, {hcase[1]} helicities =\n{tthgg}\n')
+tthgg = amps.tthgg(*momenta_b, hcase)
+print(f'tthgg for {hcase[0]}, {hcase[1]} helicities =\n{tthgg}\n')
 
 # Some tests that I ran to check my amplitudes:
 # -----------------------------------------------------------------
@@ -50,8 +49,7 @@ qbar4 = [-17.5,  17.5,  0,  0]
 g5    = [-17.5, -17.5,  0,  0]
 momenta = [t1, tbar2, q3, qbar4, g5]
 
-# uncomment to run test:
-# tests.ttqqg_test(momenta)
+tests.ttqqg_test(momenta)
 
 # ---------------------------------------------------------------
 # ttgg test: Here I compare the ttgg amplitude squared summed over color and spins
@@ -68,8 +66,7 @@ pTop = 200
 phiGlu = 0.97
 thetaGlu = 2.5
 
-# uncomment to run test:
-# tests.ttgg_test(phiTop, thetaTop, pTop, phiGlu, thetaGlu)
+tests.ttgg_test(phiTop, thetaTop, pTop, phiGlu, thetaGlu)
 
 # ---------------------------------------------------------------
 # tthg test: Here I compare the tthg amplitude for four different reference spinors.
@@ -90,8 +87,7 @@ phiGlu = 0.97
 thetaGlu = 2.5
 hcase = '+'
 
-# uncomment to run test:
-# tests.tthg_test(phiTop, thetaTop, pTop, phiGlu, thetaGlu, hcase)
+tests.tthg_test(phiTop, thetaTop, pTop, phiGlu, thetaGlu, hcase)
 
 # ---------------------------------------------------------------
 # ttgg boost test: 
@@ -100,8 +96,7 @@ v = 0.9
 phi = 1.5
 theta = 0.6
 
-# uncomment to run test:
-# tests.boost_ttgg(v, phi, theta)
+tests.boost_ttgg(v, phi, theta)
 
 # ---------------------------------------------------------------
 # tthg boost test: 
@@ -110,8 +105,7 @@ v = 0.5
 phi = 1.5
 theta = 0.6
 
-# uncomment to run test:
-# tests.boost_tthg(v, phi, theta)
+tests.boost_tthg(v, phi, theta)
 
 # ---------------------------------------------------------------
 # tthgg boost test: 
@@ -120,46 +114,22 @@ v = 0.95
 phi = 1.3
 theta = 0.8
 
-# uncomment to run test:
-# tests.boost_tthgg(v, phi, theta)
+tests.boost_tthgg(v, phi, theta)
 
 # ---------------------------------------------------------------
 # tthggg boost test: 
 
 v = 0.7
-phi = 0.3
+phi = 1.3
 theta = 0.2
 
-# uncomment to run test:
-# tests.boost_tthggg(v, phi, theta)
+tests.boost_tthggg(v, phi, theta)
+
 # ---------------------------------------------------------------
 # tthgggg boost test: 
 
-v = 0.2
-phi = 1.1
-theta = 0.7
+v = 0.25
+phi = 0
+theta = 0.5
 
-# uncomment to run test:
-# tests.boost_tthgggg(v, phi, theta)
-
-phi1   = 1.02
-theta1 = 0.87
-phi2   = 1.5
-theta2 = 1.2
-phi4   = 0.8
-theta4 = 0.2
-phi5   = 1.
-theta5 = 0.4
-phi6   = 2.2
-theta6 = 1.
-phi7   = 0.97
-theta7 = 0.8
-p1     = 200
-p2     = 250
-angles = [phi1, theta1, phi2, theta2, phi4, theta4,
-          phi5, theta5, phi6, theta6, phi7, theta7]
-
-momenta = hp.tthggggMomenta(angles, p1, p2)
-hcase = ['+', '+', '+', '+']
-tthgggg = amps.tthgggg(*momenta, hcase)
-# print(tthgggg)
+tests.boost_tthgggg(v, phi, theta)
